@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/PingCAP-QE/libs/crawler"
+
 	"github.com/google/go-github/v32/github"
 )
 

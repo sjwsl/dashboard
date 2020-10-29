@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/PingCAP-QE/libs/crawler"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v32/github"
 	"github.com/shurcooL/githubv4"
