@@ -4,14 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/PingCAP-QE/libs/crawler"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/google/go-github/v32/github"
-	"github.com/shurcooL/githubv4"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/PingCAP-QE/libs/crawler"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/go-github/v32/github"
+	"github.com/shurcooL/githubv4"
 )
 
 var db *sql.DB

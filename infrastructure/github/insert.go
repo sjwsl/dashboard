@@ -3,9 +3,10 @@ package github
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
 	"github.com/PingCAP-QE/libs/crawler"
 	"github.com/google/go-github/v32/github"
-	"time"
 )
 
 // insertRepositoryData insert Data into Repository table REPOSITORY

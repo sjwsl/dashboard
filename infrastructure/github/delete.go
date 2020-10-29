@@ -3,6 +3,7 @@ package github
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/PingCAP-QE/libs/crawler"
 )
 
