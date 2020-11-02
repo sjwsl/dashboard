@@ -79,9 +79,40 @@ func insertData(owner, repoName string, since githubv4.DateTime) {
 	fmt.Println(err)
 }
 
+type repository struct {
+	owner string
+	name  string
+}
+
+var DBList = []repository{{
+	owner: "tikv",
+	name:  "tikv",
+}, {
+	owner: "tikv",
+	name:  "pd",
+}, {
+	owner: "pingcap",
+	name:  "tidb",
+}, {
+	owner: "pingcap",
+	name:  "dm",
+}, {
+	owner: "pingcap",
+	name:  "ticdc",
+}, {
+	owner: "pingcap",
+	name:  "br",
+}, {
+	owner: "pingcap",
+	name:  "lightning",
+}}
+
 // RunInfrastructure fetch all the data first and then fetch data 10 days before.
 func RunInfrastructure() {
-	insertData("pingcap", "tidb", githubv4.DateTime{})
+	for _, r := range DBList {
+		insertData(r.owner, r.name, githubv4.DateTime{})
+	}
+
 	fmt.Printf(
 		`
 ###########################################################################################
@@ -90,7 +121,9 @@ init db ok %v
 `, time.Now())
 	for true {
 		time.Sleep(time.Hour)
-		insertData("pingcap", "tidb", githubv4.DateTime{Time: time.Now().AddDate(0, 0, -10)})
+		for _, r := range DBList {
+			insertData(r.owner, r.name, githubv4.DateTime{})
+		}
 		fmt.Printf(
 			`
 ###########################################################################################
