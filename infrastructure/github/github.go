@@ -51,15 +51,23 @@ func insertData(owner, repoName string, since githubv4.DateTime) {
 	clientV4, client := initClient()
 	repo, _, err := client.Repositories.Get(context.Background(), owner, repoName)
 	if err != nil {
-		log.Printf("err while fetching repo data in %s / %s\n", owner, repoName)
-		log.Fatal(err)
+		log.Printf("err while fetching repo data in %s / %s\n err : %v \n", owner, repoName, err)
+		time.Sleep(time.Hour)
+		repo, _, err = client.Repositories.Get(context.Background(), owner, repoName)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	insertRepositoryData(db, repo)
 
 	issueWithComments, errs := crawler.FetchIssueWithCommentsByLabels(clientV4, owner, repoName, []string{"type/bug"}, since)
 	if errs != nil {
-		log.Printf("err while fetching issues data in %s / %s\n", owner, repoName)
-		log.Fatal(errs[0])
+		log.Printf("err while fetching issues data in %s / %s\n err : %v \n", owner, repoName, err)
+		time.Sleep(time.Hour)
+		issueWithComments, errs = crawler.FetchIssueWithCommentsByLabels(clientV4, owner, repoName, []string{"type/bug"}, since)
+		if errs != nil {
+			log.Fatal(errs[0])
+		}
 	}
 
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
