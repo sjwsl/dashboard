@@ -114,7 +114,7 @@ var DBList = []repository{{
 	name:  "br",
 }, {
 	owner: "pingcap",
-	name:  "lightning",
+	name:  "tidb-lightning",
 }}
 
 // RunInfrastructure fetch all the data first and then fetch data 10 days before.

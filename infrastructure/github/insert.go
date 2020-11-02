@@ -135,8 +135,8 @@ func insertAssignedIssueNumTimeLine(db *sql.Tx, repo *github.Repository, issueWi
 			}
 		}
 
-		_, err := db.Exec(`INSERT INTO ASSIGNED_ISSUE_NUM_TIMELINE (DATETIME,ASSIGNED_ISSUE_NUM) VALUES (?,?)`,
-			tempTime, assignedIssueNums[i])
+		_, err := db.Exec(`INSERT INTO ASSIGNED_ISSUE_NUM_TIMELINE (DATETIME,REPO_ID,ASSIGNED_ISSUE_NUM) VALUES (?,?,?)`,
+			tempTime, repo.ID, assignedIssueNums[i])
 		if err != nil {
 			fmt.Println("INSERT INTO ASSIGNED_ISSUE_NUM_TIMELINE ", err)
 		}
