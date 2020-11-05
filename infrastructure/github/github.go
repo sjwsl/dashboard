@@ -59,6 +59,13 @@ func insertData(owner, repoName string, since githubv4.DateTime) {
 		}
 	}
 	insertRepositoryData(db, repo)
+	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  false,
+	})
+
+	tags := crawler.ListTags(client, owner, repoName)
+	InsertTags(tx, tags, int(*repo.ID))
 
 	issueWithComments, errs := crawler.FetchIssueWithCommentsByLabels(clientV4, owner, repoName, []string{"type/bug"}, since)
 	if errs != nil {
@@ -69,11 +76,6 @@ func insertData(owner, repoName string, since githubv4.DateTime) {
 			log.Fatal(errs[0])
 		}
 	}
-
-	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: 0,
-		ReadOnly:  false,
-	})
 
 	for _, issueWithComment := range *issueWithComments {
 		deleteIssueData(tx, &issueWithComment)
