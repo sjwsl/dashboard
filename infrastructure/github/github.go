@@ -86,6 +86,7 @@ func insertData(owner, repoName string, since githubv4.DateTime) {
 		insertCrossReferenceEvent(tx, &issueWithComment)
 	}
 	insertAssignedIssueNumTimeLine(tx, repo, issueWithComments)
+	InsertCommentVersion(tx)
 
 	err = tx.Commit()
 	fmt.Println(err)

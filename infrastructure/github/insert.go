@@ -184,3 +184,14 @@ func InsertTags(tx *sql.Tx, tags []string, repoId int) {
 		}
 	}
 }
+
+func InsertCommentVersion(tx *sql.Tx) {
+	_, err := tx.Exec(`INSERT INTO COMMENT_VERSION (COMMENT_ID,VERSIONS) SELECT COMMENT.ID AS C_ID, parse_affected_version(SUBSTRING(BODY,REGEXP_INSTR(BODY,"#### 5. Affected versions"),REGEXP_INSTR(BODY,"#### 6. Fixed versions") - REGEXP_INSTR(BODY,"#### 5. Affected versions"))) VERSIONS
+FROM COMMENT
+WHERE COMMENT.BODY REGEXP "#### 5. Affected versions" AND
+      LENGTH(parse_affected_version(SUBSTRING(BODY,REGEXP_INSTR(BODY,"#### 5. Affected versions"),REGEXP_INSTR(BODY,"#### 6. Fixed versions") - REGEXP_INSTR(BODY,"#### 5. Affected versions")))) > 0;
+`)
+	if err != nil {
+		fmt.Println("INSERT INTO REPO_VERSION ", err)
+	}
+}
