@@ -132,7 +132,7 @@ func RunInfrastructure() {
 init db ok %v
 ###########################################################################################
 `, time.Now())
-	for true {
+	for {
 		time.Sleep(time.Hour)
 		for _, r := range DBList {
 			insertData(r.owner, r.name, githubv4.DateTime{})
