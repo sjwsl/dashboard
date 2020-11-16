@@ -1,8 +1,10 @@
 query GetAll($owner : String!, $repo_name : String!,
     $issueAfter : String, $issueFilters : IssueFilters, $issueOrder : IssueOrder,
     $commentAfter : String,
+    $tagAfter : String,
     $IssuePageSize : Int = 100,
-    $CommentPageSize : Int = 100) {
+    $CommentPageSize : Int = 100,
+    $tagPageSize : Int = 100) {
     repository(owner: $owner, name: $repo_name) {
         issues(after: $issueAfter,
             filterBy: $issueFilters,
@@ -67,12 +69,24 @@ query GetAll($owner : String!, $repo_name : String!,
                         endCursor
                         hasNextPage
                     }
+                    totalCount
                 }
             }
             pageInfo {
                 endCursor
                 hasNextPage
             }
+            totalCount
+        }
+        refs(after: $tagAfter, first: $tagPageSize, refPrefix: "refs/tags/") {
+            nodes{
+                name
+            }
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
+            totalCount
         }
         createdAt
     }

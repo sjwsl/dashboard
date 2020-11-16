@@ -3,7 +3,7 @@ package model
 type Query struct {
 	Repository struct {
 		Issues struct {
-			Nodes []struct {
+			Nodes []*struct {
 				DatabaseID *int `json:"databaseId"`
 				Number     int  `json:"number"`
 				Author     *struct {
@@ -60,13 +60,25 @@ type Query struct {
 						EndCursor   *string `json:"endCursor"`
 						HasNextPage bool    `json:"hasNextPage"`
 					} `json:"pageInfo"`
+					TotalCount int `json:"totalCount"`
 				} `json:"comments"`
 			} `json:"nodes"`
 			PageInfo struct {
 				EndCursor   *string `json:"endCursor"`
 				HasNextPage bool    `json:"hasNextPage"`
 			} `json:"pageInfo"`
+			TotalCount int `json:"totalCount"`
 		} `json:"issues"`
+		Refs struct {
+			Nodes []*struct {
+				Name *string `json:"name"`
+			} `json:"nodes"`
+			PageInfo struct {
+				EndCursor   *string `json:"endCursor"`
+				HasNextPage bool    `json:"hasNextPage"`
+			} `json:"pageInfo"`
+			TotalCount int `json:"totalCount"`
+		} `json:"refs"`
 		CreatedAt string `json:"createdAt"`
 	} `json:"repository"`
 	RateLimit *struct {
