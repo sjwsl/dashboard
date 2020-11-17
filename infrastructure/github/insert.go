@@ -179,7 +179,6 @@ func InsertTags(tx *sql.Tx, totalData *model.Query) {
 	for _, tag := range totalData.Repository.Refs.Nodes {
 		_, err := tx.Exec(`INSERT INTO REPO_VERSION (TAG, REPO_ID) VALUES (?,?)`,
 			tag.Name, totalData.Repository.DatabaseID)
-		fmt.Println()
 		if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 			fmt.Println("INSERT INTO REPO_VERSION ", err)
 		}
