@@ -59,33 +59,15 @@ type Issue struct {
 	Url           string `json:"url"`
 	TimelineItems struct {
 		Nodes []*struct {
-			Typename             *string `json:"__typename"`
-			CrossReferencedEvent struct {
-				Actor *struct {
-					Login string `json:"login"`
-				} `json:"actor"`
-				CreatedAt time.Time `json:"createdAt"`
-			}
-			AssignedEvent struct {
-				Actor *struct {
-					Login string `json:"login"`
-				} `json:"actor"`
-				Assignee *struct {
-					Login string `json:"login"`
-					Email string `json:"email"`
-				} `json:"assignee"`
-				CreatedAt time.Time `json:"createdAt"`
-			}
-			UnassignedEvent struct {
-				Actor *struct {
-					Login string `json:"login"`
-				} `json:"actor"`
-				Assignee *struct {
-					Login string `json:"login"`
-					Email string `json:"email"`
-				} `json:"assignee"`
-				CreatedAt time.Time `json:"createdAt"`
-			}
+			Typename *string `json:"__typename"`
+			Actor    *struct {
+				Login *string `json:"login"`
+			} `json:"actor"`
+			Assignee *struct {
+				Login *string `json:"login"`
+				Email *string `json:"email"`
+			} `json:"assignee"`
+			CreatedAt *time.Time `json:"createdAt"`
 		} `json:"nodes"`
 	} `json:"timelineItems"`
 	Comments struct {

@@ -41,6 +41,7 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	fmt.Printf("rate limit : %v \n", totalCountData.RateLimit)
 
 	var totalData model.Query
+	totalData.Repository = totalCountData.Repository
 
 	v["IssuePageSize"] = maxGithubPageSize
 	v["CommentPageSize"] = maxGithubPageSize

@@ -10,7 +10,7 @@ import (
 
 // insertRepositoryData insert Data into Repository table REPOSITORY
 func insertRepositoryData(db *sql.DB, totalData *model.Query, owner string, repoName string) {
-	_, err := db.Exec(`REPLACE INTO  REPOSITORY (ID,OWNER, REPO_NAME) VALUES (?,?,?)`,
+	_, err := db.Exec(`INSERT INTO  REPOSITORY (ID,OWNER, REPO_NAME) VALUES (?,?,?)`,
 		*totalData.Repository.DatabaseID, owner, repoName)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 		fmt.Println("Insert fail while REPLACE INTO  REPOSITORY (ID,OWNER, REPO_NAME) VALUES", err)
@@ -35,7 +35,7 @@ func insertIssueData(db *sql.Tx, totalData *model.Query, issue *model.Issue) {
 		issue.Number, totalData.Repository.DatabaseID, issue.Closed,
 		closeAt, issue.CreatedAt, issue.Title)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
-		fmt.Println("Insert fail while INSERT INTO ISSUE ", err)
+		fmt.Println("Insert fail while REPLACE INTO ISSUE ", err)
 	}
 }
 
@@ -106,12 +106,12 @@ func insertCommentData(db *sql.Tx, issue *model.Issue) {
 func insertCrossReferenceEvent(db *sql.Tx, issue *model.Issue) {
 	for _, Node := range issue.TimelineItems.Nodes {
 		if *Node.Typename == "CrossReferenceEvent" {
-			_, err := db.Exec(`INSERT INTO Cross_Referenced_Event (USER_ID,CREATE_AT,ISSUE_ID) 		
+			_, err := db.Exec(`INSERT INTO Cross_Referenced_Event (USER_ID,CREATE_AT,ISSUE_ID)
 				SELECT USER.ID,?,?
 				from USER where USER.LOGIN_NAME = ?;`,
-				Node.CrossReferencedEvent.CreatedAt,
+				*Node.CreatedAt,
 				issue.DatabaseID,
-				Node.CrossReferencedEvent.Actor.Login)
+				*Node.Actor.Login)
 			if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 				fmt.Println("INSERT INTO COMMENT ", err)
 			}
@@ -151,12 +151,12 @@ func issueAssignedBeforeDateTime(dateTime time.Time, issue *model.Issue) bool {
 		for _, node := range issue.TimelineItems.Nodes {
 			switch *node.Typename {
 			case "AssignedEvent":
-				if node.AssignedEvent.CreatedAt.Before(dateTime) {
-					assigneeMap[string(node.AssignedEvent.Assignee.Login)] = true
+				if node.CreatedAt.Before(dateTime) {
+					assigneeMap[*node.Assignee.Login] = true
 				}
 			case "UnassignedEvent":
-				if node.UnassignedEvent.CreatedAt.Before(dateTime) {
-					assigneeMap[string(node.AssignedEvent.Assignee.Login)] = false
+				if node.CreatedAt.Before(dateTime) {
+					assigneeMap[*node.Assignee.Login] = false
 				}
 			}
 		}
@@ -177,21 +177,22 @@ func ParseDate(t time.Time) time.Time {
 
 func InsertTags(tx *sql.Tx, totalData *model.Query) {
 	for _, tag := range totalData.Repository.Refs.Nodes {
-		_, err := tx.Exec(`REPLACE INTO REPO_VERSION (TAG, REPO_ID) VALUES (?,?)`,
+		_, err := tx.Exec(`INSERT INTO REPO_VERSION (TAG, REPO_ID) VALUES (?,?)`,
 			tag.Name, totalData.Repository.DatabaseID)
+		fmt.Println()
 		if err != nil && !strings.Contains(err.Error(), "Duplicate") {
-			fmt.Println("REPLACE INTO REPO_VERSION ", err)
+			fmt.Println("INSERT INTO REPO_VERSION ", err)
 		}
 	}
 }
 
 func InsertCommentVersion(tx *sql.Tx) {
-	_, err := tx.Exec(`REPLACE INTO COMMENT_VERSION (COMMENT_ID,VERSIONS) SELECT COMMENT.ID AS C_ID, parse_affected_version(SUBSTRING(BODY,REGEXP_INSTR(BODY,"#### 5. Affected versions"),REGEXP_INSTR(BODY,"#### 6. Fixed versions") - REGEXP_INSTR(BODY,"#### 5. Affected versions"))) VERSIONS
+	_, err := tx.Exec(`INSERT INTO COMMENT_VERSION (COMMENT_ID,VERSIONS) SELECT COMMENT.ID AS C_ID, parse_affected_version(SUBSTRING(BODY,REGEXP_INSTR(BODY,"#### 5. Affected versions"),REGEXP_INSTR(BODY,"#### 6. Fixed versions") - REGEXP_INSTR(BODY,"#### 5. Affected versions"))) VERSIONS
 FROM COMMENT
 WHERE COMMENT.BODY REGEXP "#### 5. Affected versions" AND
       LENGTH(parse_affected_version(SUBSTRING(BODY,REGEXP_INSTR(BODY,"#### 5. Affected versions"),REGEXP_INSTR(BODY,"#### 6. Fixed versions") - REGEXP_INSTR(BODY,"#### 5. Affected versions")))) > 0;
 `)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
-		fmt.Println("REPLACE INTO COMMENT_VERSION ", err)
+		fmt.Println("INSERT INTO COMMENT_VERSION ", err)
 	}
 }
