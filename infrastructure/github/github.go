@@ -38,7 +38,7 @@ func init() {
 }
 
 // Fetch fetch all data
-func Fetch() *model.Query {
+func Fetch(owner, reponame string) *model.Query {
 	tokenEnvString := os.Getenv("GITHUB_TOKEN")
 	tokens := strings.Split(tokenEnvString, ":")
 
@@ -50,8 +50,8 @@ func Fetch() *model.Query {
 	request := client.NewClient()
 
 	opt := crawler.FetchOption{
-		Owner:    "pingcap",
-		RepoName: "tidb",
+		Owner:    owner,
+		RepoName: reponame,
 		IssueFilters: &map[string]interface{}{
 			"states": []string{"CLOSED", "OPEN"},
 		},
@@ -64,7 +64,7 @@ func Fetch() *model.Query {
 
 // insertData insert all the data fetched from database
 func insertData(owner, repoName string, since githubv4.DateTime) {
-	totalData := Fetch()
+	totalData := Fetch(owner, repoName)
 
 	insertRepositoryData(db, totalData, owner, repoName)
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
