@@ -1,7 +1,7 @@
 package config
 
 import (
-	"dashboard/infrastructure/github/util"
+	"dashboard/infrastructure/github/crawler/util"
 	"encoding/json"
 	"os"
 	"strings"

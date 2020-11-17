@@ -1,9 +1,8 @@
 package crawler
 
 import (
-	"dashboard/infrastructure/github/client"
-	"dashboard/infrastructure/github/config"
-	"fmt"
+	"dashboard/infrastructure/github/crawler/client"
+	"dashboard/infrastructure/github/crawler/config"
 	"os"
 	"strings"
 	"testing"
@@ -14,21 +13,21 @@ func TestFetchIssuesByRepo(t *testing.T) {
 	tokens := strings.Split(tokenEnvString, ":")
 
 	client.InitClient(config.Config{
-		GraphqlPath:   "../graphql/query.graphql",
+		GraphqlPath:   "./graphql/query.graphql",
 		ServerUrl:     "https://api.github.com/graphql",
 		Authorization: tokens,
 	})
 	request := client.NewClient()
 
 	opt := FetchOption{
-		owner:    "pingcap",
-		repoName: "tidb",
-		first:    nil,
-		issueFilters: &map[string]interface{}{
+		Owner:    "pingcap",
+		RepoName: "tidb",
+		First:    nil,
+		IssueFilters: &map[string]interface{}{
 			"states": []string{"CLOSED", "OPEN"},
 			"labels": []string{"type/bug"}},
 	}
 
-	_ = FetchByRepo(request, opt)
-	fmt.Println("ok")
+	totalData := FetchByRepo(request, opt)
+	QueryCompletenessProof(totalData)
 }

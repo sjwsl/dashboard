@@ -4,16 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/PingCAP-QE/libs/crawler"
-
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/google/go-github/v32/github"
 	"github.com/shurcooL/githubv4"
+
+	"dashboard/infrastructure/github/crawler"
+	"dashboard/infrastructure/github/crawler/client"
+	"dashboard/infrastructure/github/crawler/config"
+	"dashboard/infrastructure/github/crawler/model"
 )
 
 var db *sql.DB
@@ -36,56 +37,52 @@ func init() {
 	fmt.Println("connect success")
 }
 
-// initClient Set link with githubV4 client & github client
-func initClient() (crawler.ClientV4, *github.Client) {
+// Fetch fetch all data
+func Fetch() *model.Query {
 	tokenEnvString := os.Getenv("GITHUB_TOKEN")
 	tokens := strings.Split(tokenEnvString, ":")
-	crawler.InitGithubV4Client(tokens)
-	clientV4 := crawler.NewGithubV4Client()
-	client := crawler.NewGithubClient(tokens[0])
-	return clientV4, client
+
+	client.InitClient(config.Config{
+		GraphqlPath:   "./infrastructure/github/crawler/graphql/query.graphql",
+		ServerUrl:     "https://api.github.com/graphql",
+		Authorization: tokens,
+	})
+	request := client.NewClient()
+
+	opt := crawler.FetchOption{
+		Owner:    "pingcap",
+		RepoName: "tidb",
+		IssueFilters: &map[string]interface{}{
+			"states": []string{"CLOSED", "OPEN"},
+		},
+	}
+
+	totalData := crawler.FetchByRepo(request, opt)
+	crawler.QueryCompletenessProof(totalData)
+	return totalData
 }
 
 // insertData insert all the data fetched from database
 func insertData(owner, repoName string, since githubv4.DateTime) {
-	clientV4, client := initClient()
-	repo, _, err := client.Repositories.Get(context.Background(), owner, repoName)
-	if err != nil {
-		log.Printf("err while fetching repo data in %s / %s\n err : %v \n", owner, repoName, err)
-		time.Sleep(time.Hour)
-		repo, _, err = client.Repositories.Get(context.Background(), owner, repoName)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	insertRepositoryData(db, repo)
+	totalData := Fetch()
+
+	insertRepositoryData(db, totalData, owner, repoName)
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
 		Isolation: 0,
 		ReadOnly:  false,
 	})
 
-	tags := crawler.ListTags(client, owner, repoName)
-	InsertTags(tx, tags, int(*repo.ID))
+	InsertTags(tx, totalData)
 
-	issueWithComments, errs := crawler.FetchIssueWithCommentsByLabels(clientV4, owner, repoName, []string{"type/bug"}, since)
-	if errs != nil {
-		log.Printf("err while fetching issues data in %s / %s\n err : %v \n", owner, repoName, err)
-		time.Sleep(time.Hour)
-		issueWithComments, errs = crawler.FetchIssueWithCommentsByLabels(clientV4, owner, repoName, []string{"type/bug"}, since)
-		if errs != nil {
-			log.Fatal(errs[0])
-		}
+	for _, issue := range totalData.Repository.Issues.Nodes {
+		deleteIssueData(tx, issue)
+		insertIssueData(tx, totalData, issue)
+		insertUserDataAndRelationshipWithIssue(tx, issue)
+		insertLabelDataAndRelationshipWithIssue(tx, issue)
+		insertCommentData(tx, issue)
+		insertCrossReferenceEvent(tx, issue)
 	}
-
-	for _, issueWithComment := range *issueWithComments {
-		deleteIssueData(tx, &issueWithComment)
-		insertIssueData(tx, repo, &issueWithComment)
-		insertUserDataAndRelationshipWithIssue(tx, &issueWithComment)
-		insertLabelDataAndRelationshipWithIssue(tx, &issueWithComment)
-		insertCommentData(tx, &issueWithComment)
-		insertCrossReferenceEvent(tx, &issueWithComment)
-	}
-	insertAssignedIssueNumTimeLine(tx, repo, issueWithComments)
+	insertAssignedIssueNumTimeLine(tx, totalData)
 	InsertCommentVersion(tx)
 
 	err = tx.Commit()

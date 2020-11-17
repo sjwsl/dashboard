@@ -1,6 +1,7 @@
 package github
 
 import (
+	"dashboard/infrastructure/github/crawler/model"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -12,19 +13,20 @@ import (
 )
 
 // insertRepositoryData insert Data into Repository table REPOSITORY
-func insertRepositoryData(db *sql.DB, repo *github.Repository) {
-	_, err := db.Exec(`INSERT INTO REPOSITORY (ID,OWNER, REPO_NAME) VALUES (?,?,?)`, *repo.ID, *repo.Owner.Login, *repo.Name)
+func insertRepositoryData(db *sql.DB, totalData *model.Query, owner string, repoName string) {
+	_, err := db.Exec(`REPLACE INTO  REPOSITORY (ID,OWNER, REPO_NAME) VALUES (?,?,?)`,
+		*totalData.Repository.DatabaseID, owner, repoName)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
-		fmt.Println("Insert fail while INSERT INTO REPOSITORY (ID,OWNER, REPO_NAME) VALUES", err)
+		fmt.Println("Insert fail while REPLACE INTO  REPOSITORY (ID,OWNER, REPO_NAME) VALUES", err)
 	}
 }
 
 // insertIssueData insert data into table ISSUE
-func insertIssueData(db *sql.Tx, repo *github.Repository, issueWithComment *crawler.IssueWithComments) {
+func insertIssueData(db *sql.Tx, totalData *model.Query, issue *model.Issue) {
 	closeAt := sql.NullTime{}
-	if issueWithComment.Closed {
+	if issue.Closed {
 		closeAt = sql.NullTime{
-			Time:  issueWithComment.ClosedAt.Time,
+			Time:  *issue.ClosedAt,
 			Valid: true,
 		}
 	}
@@ -33,17 +35,17 @@ func insertIssueData(db *sql.Tx, repo *github.Repository, issueWithComment *craw
 		`INSERT INTO ISSUE 
     	(ID,NUMBER, REPOSITORY_ID, CLOSED, CLOSED_AT, CREATED_AT, TITLE) 
     	VALUES (?,?,?,?,?,?,?);`,
-		issueWithComment.DatabaseId,
-		issueWithComment.Number, *repo.ID, issueWithComment.Closed,
-		closeAt, issueWithComment.CreatedAt.Time, issueWithComment.Title)
+		issue.DatabaseID,
+		issue.Number, totalData.Repository.DatabaseID, issue.Closed,
+		closeAt, issue.CreatedAt, issue.Title)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 		fmt.Println("Insert fail while INSERT INTO ISSUE ", err)
 	}
 }
 
 //insertLabelDataAndRelationshipWithIssue insert Data into Label And LABEL_ISSUE_RELATIONSHIP
-func insertLabelDataAndRelationshipWithIssue(db *sql.Tx, issueWithComments *crawler.IssueWithComments) {
-	for _, node := range issueWithComments.Labels.Nodes {
+func insertLabelDataAndRelationshipWithIssue(db *sql.Tx, issue *model.Issue) {
+	for _, node := range issue.Labels.Nodes {
 		_, err := db.Exec(
 			`INSERT INTO LABEL (NAME) VALUES (?);`,
 			node.Name)
@@ -55,7 +57,7 @@ func insertLabelDataAndRelationshipWithIssue(db *sql.Tx, issueWithComments *craw
 			`INSERT INTO LABEL_ISSUE_RELATIONSHIP (LABEL_ID, ISSUE_ID)
 				SELECT LABEL.ID,?
 				FROM LABEL where LABEL.NAME = ?;`,
-			issueWithComments.DatabaseId, node.Name)
+			issue.DatabaseID, node.Name)
 		if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 			fmt.Println("INSERT INTO LABEL_ISSUE_RELATIONSHIP ", err)
 		}
@@ -64,8 +66,8 @@ func insertLabelDataAndRelationshipWithIssue(db *sql.Tx, issueWithComments *craw
 }
 
 // insertUserDataAndRelationshipWithIssue INSERT Data INTO USER table and INSERT INTO ASSIGNEE table
-func insertUserDataAndRelationshipWithIssue(db *sql.Tx, issueWithComments *crawler.IssueWithComments) {
-	for _, node := range issueWithComments.Assignees.Nodes {
+func insertUserDataAndRelationshipWithIssue(db *sql.Tx, issue *model.Issue) {
+	for _, node := range issue.Assignees.Nodes {
 		_, err := db.Exec(
 			`INSERT INTO USER (LOGIN_NAME, EMAIL)VALUES (?,?);`,
 			node.Login, node.Email)
@@ -77,7 +79,7 @@ func insertUserDataAndRelationshipWithIssue(db *sql.Tx, issueWithComments *crawl
 			`INSERT INTO ASSIGNEE (USER_ID, ISSUE_ID)
 				SELECT USER.ID,?
 				from USER where USER.LOGIN_NAME = ?;`,
-			issueWithComments.DatabaseId, node.Login)
+			issue.DatabaseID, node.Login)
 		if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 			fmt.Println("INSERT INTO ASSIGNEE ", err)
 		}
@@ -86,18 +88,18 @@ func insertUserDataAndRelationshipWithIssue(db *sql.Tx, issueWithComments *crawl
 
 // insertCommentData INSERT Data INTO COMMENT table
 // the comment data compose issue body and comments.
-func insertCommentData(db *sql.Tx, issueWithComments *crawler.IssueWithComments) {
+func insertCommentData(db *sql.Tx, issue *model.Issue) {
 	stmt, err := db.Prepare(`INSERT INTO COMMENT (ISSUE_ID, BODY) VALUES (?,?)`)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 		fmt.Println("INSERT INTO COMMENT ", err)
 		return
 	}
-	_, err = stmt.Exec(issueWithComments.DatabaseId, issueWithComments.Body)
+	_, err = stmt.Exec(issue.DatabaseID, issue.Body)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 		fmt.Println("INSERT INTO COMMENT ", err)
 	}
-	for _, comment := range *issueWithComments.Comments {
-		_, err := stmt.Exec(issueWithComments.DatabaseId, comment.Body)
+	for _, comment := range issue.Comments.Nodes {
+		_, err := stmt.Exec(issue.DatabaseID, comment.Body)
 		if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 			fmt.Println("INSERT INTO COMMENT ", err)
 		}
@@ -105,14 +107,14 @@ func insertCommentData(db *sql.Tx, issueWithComments *crawler.IssueWithComments)
 }
 
 // insertCrossReferenceEvent  INSERT Data INTO Cross_Referenced_Event
-func insertCrossReferenceEvent(db *sql.Tx, issueWithComments *crawler.IssueWithComments) {
-	for _, Node := range (*issueWithComments).TimelineItems.Nodes {
-		if Node.Typename == "CrossReferenceEvent" {
+func insertCrossReferenceEvent(db *sql.Tx, issue *model.Issue) {
+	for _, Node := range issue.TimelineItems.Nodes {
+		if *Node.Typename == "CrossReferenceEvent" {
 			_, err := db.Exec(`INSERT INTO Cross_Referenced_Event (USER_ID,CREATE_AT,ISSUE_ID) 		
 				SELECT USER.ID,?,?
 				from USER where USER.LOGIN_NAME = ?;`,
-				Node.CrossReferencedEvent.CreatedAt.Time,
-				issueWithComments.DatabaseId,
+				Node.CrossReferencedEvent.CreatedAt,
+				issue.DatabaseID,
 				Node.CrossReferencedEvent.Actor.Login)
 			if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 				fmt.Println("INSERT INTO COMMENT ", err)
@@ -123,21 +125,21 @@ func insertCrossReferenceEvent(db *sql.Tx, issueWithComments *crawler.IssueWithC
 
 // insertAssignedIssueNumTimeLine calculate the sum of assigned issue every day
 //	and INSERT INTO ASSIGNED_ISSUE_NUM_TIMELINE table
-func insertAssignedIssueNumTimeLine(db *sql.Tx, repo *github.Repository, issueWithComments *[]crawler.IssueWithComments) {
-	repoCreateTime := ParseDate(repo.CreatedAt.Time)
+func insertAssignedIssueNumTimeLine(db *sql.Tx, totalData *model.Query) {
+	repoCreateTime := ParseDate(totalData.Repository.CreatedAt)
 	assignedIssueNumTimeLine := time.Now().Sub(repoCreateTime)
 	hours := assignedIssueNumTimeLine.Hours()
 	assignedIssueNums := make([]int, int(hours/24)+1)
 
 	for tempTime, i := repoCreateTime, 0; i < int(hours/24)+1; i++ {
-		for _, issueWithComment := range *issueWithComments {
-			if issueAssignedBeforeDateTime(tempTime, &issueWithComment) {
+		for _, issue := range totalData.Repository.Issues.Nodes {
+			if issueAssignedBeforeDateTime(tempTime, issue) {
 				assignedIssueNums[i]++
 			}
 		}
 
 		_, err := db.Exec(`INSERT INTO ASSIGNED_ISSUE_NUM_TIMELINE (DATETIME,REPO_ID,ASSIGNED_ISSUE_NUM) VALUES (?,?,?)`,
-			tempTime, repo.ID, assignedIssueNums[i])
+			tempTime, totalData.Repository.DatabaseID, assignedIssueNums[i])
 		if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 			fmt.Println("INSERT INTO ASSIGNED_ISSUE_NUM_TIMELINE ", err)
 		}
@@ -146,19 +148,19 @@ func insertAssignedIssueNumTimeLine(db *sql.Tx, repo *github.Repository, issueWi
 }
 
 // issueAssignedBeforeDateTime find if the issue assigned before giving datetime
-func issueAssignedBeforeDateTime(dateTime time.Time, issueWithComment *crawler.IssueWithComments) bool {
+func issueAssignedBeforeDateTime(dateTime time.Time, issue *model.Issue) bool {
 
 	assigneeMap := make(map[string]bool)
-	if issueWithComment.CreatedAt.Before(dateTime) {
-		for _, node := range issueWithComment.TimelineItems.Nodes {
-			switch node.Typename {
+	if issue.CreatedAt.Before(dateTime) {
+		for _, node := range issue.TimelineItems.Nodes {
+			switch *node.Typename {
 			case "AssignedEvent":
 				if node.AssignedEvent.CreatedAt.Before(dateTime) {
-					assigneeMap[string(node.AssignedEvent.Assignee.User.Login)] = true
+					assigneeMap[string(node.AssignedEvent.Assignee.Login)] = true
 				}
 			case "UnassignedEvent":
 				if node.UnassignedEvent.CreatedAt.Before(dateTime) {
-					assigneeMap[string(node.AssignedEvent.Assignee.User.Login)] = false
+					assigneeMap[string(node.AssignedEvent.Assignee.Login)] = false
 				}
 			}
 		}
@@ -177,11 +179,12 @@ func ParseDate(t time.Time) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }
 
-func InsertTags(tx *sql.Tx, tags []string, repoId int) {
-	for _, tag := range tags {
-		_, err := tx.Exec(`INSERT INTO REPO_VERSION (TAG, REPO_ID) VALUES (?,?)`, tag, repoId)
+func InsertTags(tx *sql.Tx, totalData *model.Query) {
+	for _, tag := range totalData.Repository.Refs.Nodes {
+		_, err := tx.Exec(`REPLACE INTO REPO_VERSION (TAG, REPO_ID) VALUES (?,?)`,
+			tag.Name, totalData.Repository.DatabaseID)
 		if err != nil && !strings.Contains(err.Error(), "Duplicate") {
-			fmt.Println("INSERT INTO REPO_VERSION ", err)
+			fmt.Println("REPLACE INTO REPO_VERSION ", err)
 		}
 	}
 }

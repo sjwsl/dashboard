@@ -2,10 +2,9 @@ package client
 
 import (
 	"context"
-	"dashboard/infrastructure/github/config"
-	"dashboard/infrastructure/github/util"
+	"dashboard/infrastructure/github/crawler/config"
+	"dashboard/infrastructure/github/crawler/util"
 	"fmt"
-	"github.com/google/martian/log"
 	"github.com/machinebox/graphql"
 )
 
@@ -41,9 +40,16 @@ func InitClient(config config.Config) {
 	clientIsOpen = true
 }
 
+type AuthUseOut struct {
+	errStr string
+}
+
+func (a AuthUseOut) Error() string {
+	return a.errStr
+}
+
 // QueryWithAuthPool package the requests pool, you could use it just like client.Run in machinebox/graphql package
 func (req Request) QueryWithAuthPool(ctx context.Context, resp interface{}, variables map[string]interface{}) error {
-	reTryTimes := 3
 	for {
 		for key, arg := range variables {
 			req.req.Var(key, arg)
@@ -51,14 +57,10 @@ func (req Request) QueryWithAuthPool(ctx context.Context, resp interface{}, vari
 		err := client.Run(ctx, req.req, resp)
 
 		if err != nil {
-			if reTryTimes != 0 {
-				log.Errorf("%v,err:%v", variables, err)
-				reTryTimes--
-				continue
-			}
 			if req.index == len(requests)-1 {
-				log.Errorf("All tokens has been used, but could not stop the steps of errors.")
-				return err
+				var aerr AuthUseOut
+				aerr.errStr = err.Error() + " ; all tokens has been used, but could not stop the steps of errors."
+				return aerr
 			} else {
 				req.index++
 				req.req = requests[req.index]

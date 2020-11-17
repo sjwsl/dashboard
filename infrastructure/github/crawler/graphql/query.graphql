@@ -6,6 +6,8 @@ query GetAll($owner : String!, $repo_name : String!,
     $CommentPageSize : Int = 100,
     $tagPageSize : Int = 100) {
     repository(owner: $owner, name: $repo_name) {
+        databaseId
+        url
         issues(after: $issueAfter,
             filterBy: $issueFilters,
             first: $IssuePageSize,
@@ -39,6 +41,18 @@ query GetAll($owner : String!, $repo_name : String!,
                         ... on CrossReferencedEvent {
                             actor {
                                 login
+                            }
+                            createdAt
+                        }
+                        ... on AssignedEvent {
+                            actor {
+                                login
+                            }
+                            assignee {
+                                ... on User {
+                                    login
+                                    email
+                                }
                             }
                             createdAt
                         }
