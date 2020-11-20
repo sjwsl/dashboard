@@ -30,6 +30,6 @@ func TestFetchIssuesByRepo(t *testing.T) {
 	}
 
 	totalData := FetchByRepo(request, opt)
-	QueryCompletenessProof(totalData)
-	QueryDataInvalidProof(totalData)
+	QueryCompletenessSpec(totalData)
+	QueryDataInvalidSpec(totalData)
 }

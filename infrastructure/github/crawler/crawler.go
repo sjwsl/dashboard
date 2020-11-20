@@ -22,8 +22,8 @@ type FetchOption struct {
 
 func FetchByRepoSafe(request client.Request, opt FetchOption) *model.Query {
 	totalData := FetchByRepo(request, opt)
-	QueryCompletenessProof(totalData)
-	QueryDataInvalidProof(totalData)
+	QueryCompletenessSpec(totalData)
+	QueryDataInvalidSpec(totalData)
 	return totalData
 }
 
@@ -122,7 +122,7 @@ func pingCountByRepo(request client.Request, variable map[string]interface{}) (m
 	return data, nil
 }
 
-func QueryCompletenessProof(totalData *model.Query) {
+func QueryCompletenessSpec(totalData *model.Query) {
 	nums := make([]int, len(totalData.Repository.Issues.Nodes))
 	for i, _ := range nums {
 		nums[i] = totalData.Repository.Issues.Nodes[i].Number
@@ -141,7 +141,7 @@ func QueryCompletenessProof(totalData *model.Query) {
 	}
 }
 
-func QueryDataInvalidProof(totalData *model.Query) {
+func QueryDataInvalidSpec(totalData *model.Query) {
 	if !util.NotEmptyStrInQuery(reflect.ValueOf(totalData), "") {
 		panic("invalid data leak")
 	}
