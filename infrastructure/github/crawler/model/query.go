@@ -3,9 +3,10 @@ package model
 import "time"
 
 type Query struct {
-	Repository struct {
-		DatabaseID *int   `json:"databaseId"`
+	Repository *struct {
+		DatabaseID int    `json:"databaseId"`
 		Url        string `json:"url"`
+		Name       string `json:"name"`
 		Issues     struct {
 			Nodes    []*Issue `json:"nodes"`
 			PageInfo struct {
@@ -16,7 +17,7 @@ type Query struct {
 		} `json:"issues"`
 		Refs struct {
 			Nodes []*struct {
-				Name *string `json:"name"`
+				Name string `json:"name"`
 			} `json:"nodes"`
 			PageInfo struct {
 				EndCursor   *string `json:"endCursor"`
@@ -35,8 +36,8 @@ type Query struct {
 }
 
 type Issue struct {
-	DatabaseID *int `json:"databaseId"`
-	Number     int  `json:"number"`
+	DatabaseID int `json:"databaseId"`
+	Number     int `json:"number"`
 	Author     *struct {
 		Login string `json:"login"`
 	} `json:"author"`
@@ -50,8 +51,8 @@ type Issue struct {
 	} `json:"labels"`
 	Assignees struct {
 		Nodes []*struct {
-			Login string `json:"login"`
-			Email string `json:"email"`
+			Login string  `json:"login"`
+			Email *string `json:"email"`
 		} `json:"nodes"`
 	} `json:"assignees"`
 	Title         string `json:"title"`
@@ -72,7 +73,7 @@ type Issue struct {
 	} `json:"timelineItems"`
 	Comments struct {
 		Nodes []*struct {
-			DatabaseID     *int   `json:"databaseId"`
+			DatabaseID     int    `json:"databaseId"`
 			Body           string `json:"body"`
 			ViewerCanReact bool   `json:"viewerCanReact"`
 			Author         *struct {

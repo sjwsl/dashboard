@@ -9282,7 +9282,7 @@ type Ref implements Node {
         headRefName: String,
         "A list of label names to filter the pull requests by."
         labels: [String!],
-        "Returns the last _n_ elements from the list."
+        "Returns the las    t _n_ elements from the list."
         last: Int,
         "Ordering options for pull requests returned from the connection."
         orderBy: IssueOrder,

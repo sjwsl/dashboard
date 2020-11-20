@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/google/martian/log"
 	"github.com/pkg/math"
+	"reflect"
 )
 
 const maxGithubPageSize = 100
@@ -17,6 +18,13 @@ type FetchOption struct {
 	RepoName     string
 	First        *int
 	IssueFilters *map[string]interface{}
+}
+
+func FetchByRepoSafe(request client.Request, opt FetchOption) *model.Query {
+	totalData := FetchByRepo(request, opt)
+	QueryCompletenessProof(totalData)
+	QueryDataInvalidProof(totalData)
+	return totalData
 }
 
 func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
@@ -36,8 +44,6 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Get data issue count: %d, tag count: %d\n",
-		totalCountData.Repository.Issues.TotalCount, totalCountData.Repository.Refs.TotalCount)
 	fmt.Printf("rate limit : %v \n", totalCountData.RateLimit)
 
 	var totalData model.Query
@@ -49,6 +55,7 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	if opt.First != nil {
 		totalCount = math.Min(totalCount, *opt.First)
 	}
+	fmt.Printf("Get data issue count: %d \n", totalCount)
 	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
 		fmt.Printf("<Fetching issue data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
 		v["IssuePageSize"] = math.Min(totalCount-count, maxGithubPageSize)
@@ -79,6 +86,7 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	if opt.First != nil {
 		totalCount = math.Min(totalCount, *opt.First)
 	}
+	fmt.Printf("Get data Tag count: %d \n", totalCount)
 	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
 		fmt.Printf("<Fetching tag data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
 		v["tagPageSize"] = math.Min(totalCount-count, maxGithubPageSize)
@@ -125,10 +133,16 @@ func QueryCompletenessProof(totalData *model.Query) {
 	}
 	names := make([]string, len(totalData.Repository.Refs.Nodes))
 	for i, _ := range names {
-		names[i] = *totalData.Repository.Refs.Nodes[i].Name
+		names[i] = totalData.Repository.Refs.Nodes[i].Name
 	}
 	err = util.NameCompletenessProof(totalData.Repository.Refs.TotalCount, names)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func QueryDataInvalidProof(totalData *model.Query) {
+	if !util.NotEmptyStrInQuery(reflect.ValueOf(totalData), "") {
+		panic("invalid data leak")
 	}
 }

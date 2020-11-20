@@ -11,7 +11,7 @@ import (
 // insertRepositoryData insert Data into Repository table REPOSITORY
 func insertRepositoryData(db *sql.DB, totalData *model.Query, owner string, repoName string) {
 	_, err := db.Exec(`INSERT INTO  REPOSITORY (ID,OWNER, REPO_NAME) VALUES (?,?,?)`,
-		*totalData.Repository.DatabaseID, owner, repoName)
+		totalData.Repository.DatabaseID, owner, repoName)
 	if err != nil && !strings.Contains(err.Error(), "Duplicate") {
 		fmt.Println("Insert fail while REPLACE INTO  REPOSITORY (ID,OWNER, REPO_NAME) VALUES", err)
 	}

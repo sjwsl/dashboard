@@ -8,6 +8,7 @@ query GetAll($owner : String!, $repo_name : String!,
     repository(owner: $owner, name: $repo_name) {
         databaseId
         url
+        name
         issues(after: $issueAfter,
             filterBy: $issueFilters,
             first: $IssuePageSize,

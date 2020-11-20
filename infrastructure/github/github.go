@@ -57,8 +57,7 @@ func Fetch(owner, reponame string) *model.Query {
 		},
 	}
 
-	totalData := crawler.FetchByRepo(request, opt)
-	crawler.QueryCompletenessProof(totalData)
+	totalData := crawler.FetchByRepoSafe(request, opt)
 	return totalData
 }
 

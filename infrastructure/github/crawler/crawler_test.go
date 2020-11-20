@@ -19,10 +19,11 @@ func TestFetchIssuesByRepo(t *testing.T) {
 	})
 	request := client.NewClient()
 
+	first := 101
 	opt := FetchOption{
 		Owner:    "pingcap",
 		RepoName: "tidb",
-		First:    nil,
+		First:    &first,
 		IssueFilters: &map[string]interface{}{
 			"states": []string{"CLOSED", "OPEN"},
 			"labels": []string{"type/bug"}},
@@ -30,4 +31,5 @@ func TestFetchIssuesByRepo(t *testing.T) {
 
 	totalData := FetchByRepo(request, opt)
 	QueryCompletenessProof(totalData)
+	QueryDataInvalidProof(totalData)
 }
