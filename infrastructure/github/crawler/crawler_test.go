@@ -1,11 +1,12 @@
 package crawler
 
 import (
-	"dashboard/infrastructure/github/crawler/client"
-	"dashboard/infrastructure/github/crawler/config"
 	"os"
 	"strings"
 	"testing"
+
+	"dashboard/infrastructure/github/crawler/client"
+	"dashboard/infrastructure/github/crawler/config"
 )
 
 func TestFetchIssuesByRepo(t *testing.T) {

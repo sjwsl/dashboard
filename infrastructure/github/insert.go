@@ -1,11 +1,12 @@
 package github
 
 import (
-	"dashboard/infrastructure/github/crawler/model"
 	"database/sql"
 	"fmt"
 	"strings"
 	"time"
+
+	"dashboard/infrastructure/github/crawler/model"
 )
 
 // insertRepositoryData insert Data into Repository table REPOSITORY

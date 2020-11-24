@@ -2,9 +2,11 @@ package client
 
 import (
 	"context"
+	"fmt"
+
 	"dashboard/infrastructure/github/crawler/config"
 	"dashboard/infrastructure/github/crawler/util"
-	"fmt"
+
 	"github.com/machinebox/graphql"
 )
 
@@ -17,6 +19,7 @@ type Request struct {
 	index int
 }
 
+// NewClient return a client with request index 0
 func NewClient() Request {
 	if !clientIsOpen {
 		panic(fmt.Errorf("clients need to be init before use it , you could init it by InitClient"))
@@ -24,6 +27,7 @@ func NewClient() Request {
 	return Request{requests[0], 0}
 }
 
+// InitClient init Client with all the config, you must InitClient before NewClient
 func InitClient(config config.Config) {
 	content, err := util.ReadFile(config.GraphqlPath)
 	if err != nil {
@@ -69,5 +73,4 @@ func (req Request) QueryWithAuthPool(ctx context.Context, resp interface{}, vari
 			return nil
 		}
 	}
-
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// ReadFile Readfile with path return bytes
 func ReadFile(path string) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -21,20 +22,7 @@ func ReadFile(path string) ([]byte, error) {
 	return content, nil
 }
 
-//func VersionToInt(version string) int {
-//	versionDefinition := regexp.MustCompile(`\d+\.\d+\.\d+|master|unplanned|unplaned`)
-//	version = versionDefinition.FindString(version)
-//	intDefinition := regexp.MustCompile(`\d+`)
-//	versionIndexs := intDefinition.FindStringSubmatch(version)
-//	if len(versionIndexs) != 3 {
-//		log.Errorf("Error version type")
-//	}
-//	versionIndex := make([]int,3)
-//	for i := 0; i < 3; i++ {
-//		versionIndex[i] := int()
-//	}
-//}
-
+// IdCompletenessProof check the unique id with totalCount.
 func IdCompletenessProof(totalCount int, ids []int) error {
 	if len(ids) != totalCount {
 		return fmt.Errorf("fatal : lack ids total count %d, ids length %d. ", totalCount, len(ids))
@@ -51,6 +39,7 @@ func IdCompletenessProof(totalCount int, ids []int) error {
 	return nil
 }
 
+// NameCompletenessProof check the unique names with totalCount.
 func NameCompletenessProof(totalCount int, names []string) error {
 	if len(names) != totalCount {
 		return fmt.Errorf("fatal : lack names total count %d, names length %d. ", totalCount, len(names))
@@ -67,6 +56,7 @@ func NameCompletenessProof(totalCount int, names []string) error {
 	return nil
 }
 
+// NotEmptyStrInQuery check string fields in complex struct named  "name" || "title" || "url" || "login" are not empty.
 func NotEmptyStrInQuery(v Value, fieldName string) bool {
 	name := strings.ToLower(fieldName)
 	switch v.Kind() {

@@ -1,10 +1,11 @@
 package config
 
 import (
-	"dashboard/infrastructure/github/crawler/util"
 	"encoding/json"
 	"os"
 	"strings"
+
+	"dashboard/infrastructure/github/crawler/util"
 )
 
 type Config struct {
@@ -13,6 +14,7 @@ type Config struct {
 	Authorization []string `json:"authorization"`
 }
 
+// FromJSON form config by json file path
 func FromJSON(path string) Config {
 	content, err := util.ReadFile(path)
 	if err != nil {
@@ -27,6 +29,7 @@ func FromJSON(path string) Config {
 	return result
 }
 
+// FromEnv form config by Env
 func FromEnv() Config {
 	var result Config
 	result.GraphqlPath = os.Getenv("graphql_path")

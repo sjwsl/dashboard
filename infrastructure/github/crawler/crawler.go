@@ -2,13 +2,15 @@ package crawler
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+
 	"dashboard/infrastructure/github/crawler/client"
 	"dashboard/infrastructure/github/crawler/model"
 	"dashboard/infrastructure/github/crawler/util"
-	"fmt"
+
 	"github.com/google/martian/log"
 	"github.com/pkg/math"
-	"reflect"
 )
 
 const maxGithubPageSize = 100
@@ -20,6 +22,7 @@ type FetchOption struct {
 	IssueFilters *map[string]interface{}
 }
 
+// FetchByRepoSafe Fetch all the data and then check the data.
 func FetchByRepoSafe(request client.Request, opt FetchOption) *model.Query {
 	totalData := FetchByRepo(request, opt)
 	QueryCompletenessSpec(totalData)
@@ -27,6 +30,7 @@ func FetchByRepoSafe(request client.Request, opt FetchOption) *model.Query {
 	return totalData
 }
 
+// FetchByRepo Fetch all the Query data necessary with FetchOption and request.
 func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	v := map[string]interface{}{
 		"owner":           opt.Owner,
@@ -113,6 +117,7 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	return &totalData
 }
 
+// pingCountByRepo ping the graphql server to get  count infos of issues and tags.
 func pingCountByRepo(request client.Request, variable map[string]interface{}) (model.Query, error) {
 	var data model.Query
 	err := request.QueryWithAuthPool(context.Background(), &data, variable)
@@ -122,6 +127,7 @@ func pingCountByRepo(request client.Request, variable map[string]interface{}) (m
 	return data, nil
 }
 
+// QueryCompletenessSpec check completeness of issue numbers & tag names.
 func QueryCompletenessSpec(totalData *model.Query) {
 	nums := make([]int, len(totalData.Repository.Issues.Nodes))
 	for i, _ := range nums {
@@ -141,6 +147,7 @@ func QueryCompletenessSpec(totalData *model.Query) {
 	}
 }
 
+// QueryDataInvalidSpec check if data is invalid, because of no name or other important fields.
 func QueryDataInvalidSpec(totalData *model.Query) {
 	if !util.NotEmptyStrInQuery(reflect.ValueOf(totalData), "") {
 		panic("invalid data leak")
