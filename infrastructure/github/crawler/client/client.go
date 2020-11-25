@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"dashboard/infrastructure/github/crawler/config"
-	"dashboard/infrastructure/github/crawler/util"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
 
 	"github.com/machinebox/graphql"
 )
@@ -44,11 +44,11 @@ func InitClient(config config.Config) {
 	clientIsOpen = true
 }
 
-type AuthUseOut struct {
+type ErrAllRequestFailed struct {
 	errStr string
 }
 
-func (a AuthUseOut) Error() string {
+func (a ErrAllRequestFailed) Error() string {
 	return a.errStr
 }
 
@@ -62,7 +62,7 @@ func (req Request) QueryWithAuthPool(ctx context.Context, resp interface{}, vari
 
 		if err != nil {
 			if req.index == len(requests)-1 {
-				var aerr AuthUseOut
+				var aerr ErrAllRequestFailed
 				aerr.errStr = err.Error() + " ; all tokens has been used, but could not stop the steps of errors."
 				return aerr
 			} else {
