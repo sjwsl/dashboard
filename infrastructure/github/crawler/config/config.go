@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"dashboard/infrastructure/github/crawler/util"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
 )
 
 type Config struct {

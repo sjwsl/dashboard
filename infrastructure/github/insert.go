@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"dashboard/infrastructure/github/crawler/model"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
 // insertRepositoryData insert Data into Repository table REPOSITORY

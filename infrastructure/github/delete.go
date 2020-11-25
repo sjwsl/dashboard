@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"dashboard/infrastructure/github/crawler/model"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
 // deleteIssueData delete data from issue

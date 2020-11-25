@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"dashboard/infrastructure/github/crawler/client"
-	"dashboard/infrastructure/github/crawler/config"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
 )
 
 func TestFetchIssuesByRepo(t *testing.T) {
@@ -25,7 +25,7 @@ func TestFetchIssuesByRepo(t *testing.T) {
 		Owner:    "pingcap",
 		RepoName: "tidb",
 		First:    &first,
-		IssueFilters: &map[string]interface{}{
+		IssueFilters: map[string]interface{}{
 			"states": []string{"CLOSED", "OPEN"},
 			"labels": []string{"type/bug"}},
 	}

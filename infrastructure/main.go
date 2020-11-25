@@ -1,6 +1,6 @@
 package main
 
-import "dashboard/infrastructure/github"
+import "github.com/PingCAP-QE/dashboard/infrastructure/github"
 
 func main() {
 	github.RunInfrastructure()

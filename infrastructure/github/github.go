@@ -11,10 +11,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/shurcooL/githubv4"
 
-	"dashboard/infrastructure/github/crawler"
-	"dashboard/infrastructure/github/crawler/client"
-	"dashboard/infrastructure/github/crawler/config"
-	"dashboard/infrastructure/github/crawler/model"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
 var db *sql.DB
@@ -52,7 +52,7 @@ func Fetch(owner, reponame string) *model.Query {
 	opt := crawler.FetchOption{
 		Owner:    owner,
 		RepoName: reponame,
-		IssueFilters: &map[string]interface{}{
+		IssueFilters: map[string]interface{}{
 			"states": []string{"CLOSED", "OPEN"},
 		},
 	}

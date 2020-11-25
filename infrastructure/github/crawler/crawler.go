@@ -2,14 +2,13 @@ package crawler
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"reflect"
 
-	"dashboard/infrastructure/github/crawler/client"
-	"dashboard/infrastructure/github/crawler/model"
-	"dashboard/infrastructure/github/crawler/util"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
 
-	"github.com/google/martian/log"
 	"github.com/pkg/math"
 )
 
@@ -19,7 +18,7 @@ type FetchOption struct {
 	Owner        string
 	RepoName     string
 	First        *int
-	IssueFilters *map[string]interface{}
+	IssueFilters map[string]interface{}
 }
 
 // FetchByRepoSafe Fetch all the data and then check the data.
@@ -43,12 +42,12 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 		"CommentPageSize": 0,
 		"tagPageSize":     0,
 	}
-	fmt.Printf("Ping count with %v\n", v)
+	log.Printf("Ping count with %v\n", v)
 	totalCountData, err := pingCountByRepo(request, v)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("rate limit : %v \n", totalCountData.RateLimit)
+	log.Printf("rate limit : %v \n", totalCountData.RateLimit)
 
 	var totalData model.Query
 	totalData.Repository = totalCountData.Repository
@@ -59,22 +58,25 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	if opt.First != nil {
 		totalCount = math.Min(totalCount, *opt.First)
 	}
-	fmt.Printf("Get data issue count: %d \n", totalCount)
+	log.Printf("Get data issue count: %d \n", totalCount)
 	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
-		fmt.Printf("<Fetching issue data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
+		log.Printf("<Fetching issue data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
 		v["IssuePageSize"] = math.Min(totalCount-count, maxGithubPageSize)
 		var respData model.Query
 		retryTimes := 10
-		for retryTimes != 0 {
+		for {
 			err := request.QueryWithAuthPool(context.Background(), &respData, v)
 			if err != nil {
-				log.Errorf(err.Error()+" \n query variables: %v \n retry time: %d", v, 10-retryTimes)
+				log.Printf(err.Error()+" \n query variables: %v \n retry time: %d", v, 10-retryTimes)
 			} else {
 				break
 			}
 			retryTimes--
+			if retryTimes == 0 {
+				log.Fatal(err.Error()+" \n query variables: %v \n retry time: %d", v, 10-retryTimes)
+			}
 		}
-		fmt.Printf("Fetch success.>\n")
+		log.Printf("Fetch success.>\n")
 		totalData.Repository.Issues.Nodes = append(totalData.Repository.Issues.Nodes, respData.Repository.Issues.Nodes...)
 		if !respData.Repository.Issues.PageInfo.HasNextPage {
 			break
@@ -90,22 +92,25 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 	if opt.First != nil {
 		totalCount = math.Min(totalCount, *opt.First)
 	}
-	fmt.Printf("Get data Tag count: %d \n", totalCount)
+	log.Printf("Get data Tag count: %d \n", totalCount)
 	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
-		fmt.Printf("<Fetching tag data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
+		log.Printf("<Fetching tag data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
 		v["tagPageSize"] = math.Min(totalCount-count, maxGithubPageSize)
 		var respData model.Query
 		retryTimes := 10
-		for retryTimes != 0 {
+		for {
 			err := request.QueryWithAuthPool(context.Background(), &respData, v)
 			if err != nil {
-				log.Errorf(err.Error()+" \n query variables: %v \n retry time: %d", v, retryTimes)
+				log.Printf(err.Error()+" \n query variables: %v \n retry time: %d", v, retryTimes)
 			} else {
 				break
 			}
 			retryTimes--
+			if retryTimes == 0 {
+				log.Fatal(err.Error()+" \n query variables: %v \n retry time: %d", v, 10-retryTimes)
+			}
 		}
-		fmt.Printf("Fetch success.>\n")
+		log.Printf("Fetch success.>\n")
 		totalData.Repository.Refs.Nodes = append(totalData.Repository.Refs.Nodes, respData.Repository.Refs.Nodes...)
 		if !respData.Repository.Refs.PageInfo.HasNextPage {
 			break
