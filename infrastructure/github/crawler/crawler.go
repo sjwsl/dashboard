@@ -31,6 +31,7 @@ func FetchByRepoSafe(request client.Request, opt FetchOption) *model.Query {
 
 // FetchByRepo Fetch all the Query data necessary with FetchOption and request.
 func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
+	// v is arguments rely on query in infrastructure/github/crawler/graphql/query.graphql
 	v := map[string]interface{}{
 		"owner":           opt.Owner,
 		"repo_name":       opt.RepoName,
