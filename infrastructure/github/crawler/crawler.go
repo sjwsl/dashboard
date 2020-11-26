@@ -42,6 +42,7 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 		"CommentPageSize": 0,
 		"tagPageSize":     0,
 	}
+
 	log.Printf("Ping count with %v\n", v)
 	totalCountData, err := pingCountByRepo(request, v)
 	if err != nil {

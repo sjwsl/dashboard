@@ -3,9 +3,10 @@ package client
 import (
 	"context"
 	"fmt"
-
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
+	"net/url"
+	"os"
 
 	"github.com/machinebox/graphql"
 )
@@ -29,6 +30,7 @@ func NewClient() Request {
 
 // InitClient init Client with all the config, you must InitClient before NewClient
 func InitClient(config config.Config) {
+	CheckConfig(config)
 	content, err := util.ReadFile(config.GraphqlPath)
 	if err != nil {
 		panic(err)
@@ -42,6 +44,24 @@ func InitClient(config config.Config) {
 		requests[i] = req
 	}
 	clientIsOpen = true
+}
+
+// CheckConfig check the init config.
+func CheckConfig(c config.Config) {
+	// Client use net/package to parse url too.
+	_, err := url.Parse(c.ServerUrl)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = os.Open(c.GraphqlPath)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(c.Authorization) == 0 {
+		panic(fmt.Errorf("there must have at least one token string in config"))
+	}
 }
 
 type ErrAllRequestFailed struct {
