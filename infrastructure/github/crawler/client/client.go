@@ -3,12 +3,13 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
-	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
 	"net/url"
 	"os"
 
 	"github.com/machinebox/graphql"
+
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
 )
 
 var requests []*graphql.Request

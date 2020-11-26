@@ -3,10 +3,10 @@ package parser
 import (
 	"fmt"
 
+	"github.com/timtadh/lexmachine"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/lexer"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
-
-	"github.com/timtadh/lexmachine"
 )
 
 func Parse(tokens []lexmachine.Token) ([]model.Version, error) {

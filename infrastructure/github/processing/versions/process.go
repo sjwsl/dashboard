@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	lex "github.com/timtadh/lexmachine"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/lexer"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/parser"
-
-	lex "github.com/timtadh/lexmachine"
 )
 
 const affectedVersionTemplate string = "#### 5. Affected versions"

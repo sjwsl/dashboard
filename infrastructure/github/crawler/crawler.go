@@ -5,11 +5,11 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/pkg/math"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
-
-	"github.com/pkg/math"
 )
 
 const maxGithubPageSize = 100

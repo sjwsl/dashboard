@@ -5,9 +5,9 @@ import (
 	"log"
 	"testing"
 
-	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/lexer"
-
 	lex "github.com/timtadh/lexmachine"
+
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/lexer"
 )
 
 func TestParser(t *testing.T) {
