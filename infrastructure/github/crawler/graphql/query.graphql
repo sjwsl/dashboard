@@ -1,0 +1,114 @@
+query GetAll($owner : String!, $repo_name : String!,
+    $issueAfter : String, $issueFilters : IssueFilters, $issueOrder : IssueOrder,
+    $commentAfter : String,
+    $tagAfter : String,
+    $IssuePageSize : Int = 100,
+    $CommentPageSize : Int = 100,
+    $tagPageSize : Int = 100) {
+    repository(owner: $owner, name: $repo_name) {
+        databaseId
+        url
+        name
+        issues(after: $issueAfter,
+            filterBy: $issueFilters,
+            first: $IssuePageSize,
+            orderBy: $issueOrder) {
+            nodes {
+                databaseId
+                number
+                author {
+                    login
+                }
+                closed
+                closedAt
+                createdAt
+                labels(first: 100) {
+                    nodes {
+                        name
+                    }
+                }
+                assignees(first: 100) {
+                    nodes {
+                        login
+                        email
+                    }
+                }
+                title
+                body
+                url
+                timelineItems(first: 100) {
+                    nodes {
+                        __typename
+                        ... on CrossReferencedEvent {
+                            actor {
+                                login
+                            }
+                            createdAt
+                        }
+                        ... on AssignedEvent {
+                            actor {
+                                login
+                            }
+                            assignee {
+                                ... on User {
+                                    login
+                                    email
+                                }
+                            }
+                            createdAt
+                        }
+                        ... on UnassignedEvent {
+                            actor {
+                                login
+                            }
+                            assignee {
+                                ... on User {
+                                    login
+                                    email
+                                }
+                            }
+                            createdAt
+                        }
+                    }
+                }
+                comments(first: $CommentPageSize, after: $commentAfter) {
+                    nodes {
+                        databaseId
+                        body
+                        viewerCanReact
+                        author {
+                            login
+                        }
+                    }
+                    pageInfo {
+                        endCursor
+                        hasNextPage
+                    }
+                    totalCount
+                }
+            }
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
+            totalCount
+        }
+        refs(after: $tagAfter, first: $tagPageSize, refPrefix: "refs/tags/") {
+            nodes{
+                name
+            }
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
+            totalCount
+        }
+        createdAt
+    }
+    rateLimit {
+        limit
+        cost
+        remaining
+        resetAt
+    }
+}

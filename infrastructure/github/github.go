@@ -4,16 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/PingCAP-QE/libs/crawler"
-
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/google/go-github/v32/github"
 	"github.com/shurcooL/githubv4"
+
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
 var db *sql.DB
@@ -36,61 +37,102 @@ func init() {
 	fmt.Println("connect success")
 }
 
-// initClient Set link with githubV4 client & github client
-func initClient() (crawler.ClientV4, *github.Client) {
+// Fetch fetch all data
+func Fetch(owner, reponame string) *model.Query {
 	tokenEnvString := os.Getenv("GITHUB_TOKEN")
 	tokens := strings.Split(tokenEnvString, ":")
-	crawler.InitGithubV4Client(tokens)
-	clientV4 := crawler.NewGithubV4Client()
-	client := crawler.NewGithubClient(tokens[0])
-	return clientV4, client
+
+	client.InitClient(config.Config{
+		GraphqlPath:   "./infrastructure/github/crawler/graphql/query.graphql",
+		ServerUrl:     "https://api.github.com/graphql",
+		Authorization: tokens,
+	})
+	request := client.NewClient()
+
+	opt := crawler.FetchOption{
+		Owner:    owner,
+		RepoName: reponame,
+		IssueFilters: map[string]interface{}{
+			"states": []string{"CLOSED", "OPEN"},
+		},
+	}
+
+	totalData := crawler.FetchByRepoSafe(request, opt)
+	return totalData
 }
 
 // insertData insert all the data fetched from database
 func insertData(owner, repoName string, since githubv4.DateTime) {
-	clientV4, client := initClient()
-	repo, _, err := client.Repositories.Get(context.Background(), owner, repoName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	insertRepositoryData(db, repo)
+	totalData := Fetch(owner, repoName)
 
-	issueWithComments, errs := crawler.FetchIssueWithCommentsByLabels(clientV4, owner, repoName, []string{"type/bug"}, since)
-	if errs != nil {
-		log.Fatal(errs[0])
-	}
-
+	insertRepositoryData(db, totalData, owner, repoName)
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
 		Isolation: 0,
 		ReadOnly:  false,
 	})
 
-	for _, issueWithComment := range *issueWithComments {
-		deleteIssueData(tx, &issueWithComment)
-		insertIssueData(tx, repo, &issueWithComment)
-		insertUserDataAndRelationshipWithIssue(tx, &issueWithComment)
-		insertLabelDataAndRelationshipWithIssue(tx, &issueWithComment)
-		insertCommentData(tx, &issueWithComment)
-		insertCrossReferenceEvent(tx, &issueWithComment)
+	InsertTags(tx, totalData)
+
+	for _, issue := range totalData.Repository.Issues.Nodes {
+		deleteIssueData(tx, issue)
+		insertIssueData(tx, totalData, issue)
+		insertUserDataAndRelationshipWithIssue(tx, issue)
+		insertLabelDataAndRelationshipWithIssue(tx, issue)
+		insertCommentData(tx, issue)
+		insertCrossReferenceEvent(tx, issue)
 	}
-	insertAssignedIssueNumTimeLine(tx, repo, issueWithComments)
+	insertAssignedIssueNumTimeLine(tx, totalData)
+	InsertCommentVersion(tx)
 
 	err = tx.Commit()
 	fmt.Println(err)
 }
 
+type repository struct {
+	owner string
+	name  string
+}
+
+var DBList = []repository{{
+	owner: "tikv",
+	name:  "tikv",
+}, {
+	owner: "tikv",
+	name:  "pd",
+}, {
+	owner: "pingcap",
+	name:  "tidb",
+}, {
+	owner: "pingcap",
+	name:  "dm",
+}, {
+	owner: "pingcap",
+	name:  "ticdc",
+}, {
+	owner: "pingcap",
+	name:  "br",
+}, {
+	owner: "pingcap",
+	name:  "tidb-lightning",
+}}
+
 // RunInfrastructure fetch all the data first and then fetch data 10 days before.
 func RunInfrastructure() {
-	insertData("pingcap", "tidb", githubv4.DateTime{})
+	for _, r := range DBList {
+		insertData(r.owner, r.name, githubv4.DateTime{})
+	}
+
 	fmt.Printf(
 		`
 ###########################################################################################
 init db ok %v
 ###########################################################################################
 `, time.Now())
-	for true {
+	for {
 		time.Sleep(time.Hour)
-		insertData("pingcap", "tidb", githubv4.DateTime{Time: time.Now().AddDate(0, 0, -10)})
+		for _, r := range DBList {
+			insertData(r.owner, r.name, githubv4.DateTime{})
+		}
 		fmt.Printf(
 			`
 ###########################################################################################

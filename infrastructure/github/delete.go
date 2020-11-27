@@ -4,14 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/PingCAP-QE/libs/crawler"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
 // deleteIssueData delete data from issue
-func deleteIssueData(db *sql.Tx, issueWithComment *crawler.IssueWithComments) {
+func deleteIssueData(db *sql.Tx, issue *model.Issue) {
 	_, err := db.Exec(
-		`DELETE from ISSUE where ISSUE.ID = ?;`, issueWithComment.DatabaseId)
+		`DELETE from ISSUE where ISSUE.ID = ?;`, issue.DatabaseID)
 	if err != nil {
-		fmt.Println("Delete fail while DELETE from ISSUE where NUMBER = ?:", err)
+		fmt.Println("Delete fail while DELETE from ISSUE where NUMBER = ?;", err)
 	}
 }
