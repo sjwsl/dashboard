@@ -11,7 +11,13 @@ import (
 func TestLexer(t *testing.T) {
 	s, err := Lexer.Scanner([]byte(`
 #### 5. Affected versions
-[v4.3.1:v3.4.1] 3.5.6.7
+<!-- a -->
+<!-- a	 --sd
+	csd- -asdsad 	
+sd-->
+unreleased master
+
+[v4.3.1:v3.4.1] 3.5.6666666666666666666666666666666
 #### 6. Fixed versions
 `))
 	if err != nil {

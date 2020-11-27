@@ -33,6 +33,8 @@ const (
 	LBRACK              // [
 	RBRACK              // ]
 	COLON               // :
+	UNRELEASED
+	MASTER
 )
 
 func initTokens() {
@@ -41,6 +43,8 @@ func initTokens() {
 		"AffectedVersion",
 		"FixedVersion",
 		"VERSION",
+		"UNRELEASED",
+		"MASTER",
 	}
 	Literals = []string{
 		"[",
@@ -69,6 +73,8 @@ func initLexer() (*lex.Lexer, error) {
 	}
 	lexer.Add([]byte(Keywords[0]), token(`AffectedVersion`))
 	lexer.Add([]byte(Keywords[1]), token(`FixedVersion`))
+	lexer.Add([]byte(`unreleased`), token(`UNRELEASED`))
+	lexer.Add([]byte(`master`), token(`MASTER`))
 
 	// ignore the comment
 	lexer.Add([]byte(`<!--`),

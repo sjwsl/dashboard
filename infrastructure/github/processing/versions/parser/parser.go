@@ -9,27 +9,20 @@ import (
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 )
 
+// Tokens => ( AffectedVersion | FixedVersion ) (IndexVersion | VERSION | COMMENT | MASTER | UNRELEASED)*
 func Parse(tokens []lexmachine.Token) ([]model.Version, error) {
 	var versions []model.Version
 	if len(tokens) == 0 {
 		return nil, nil
 	}
-	pos := 0
+	if tokens[0].Type != lexer.AffectedVersion &&
+		tokens[0].Type != lexer.FixedVersion {
+		return nil, fmt.Errorf("parse err: duplicate or position err of Affected Version title")
+	}
+	pos := 1
 	for {
 		switch tokens[pos].Type {
 		case lexer.COMMENT:
-		case lexer.AffectedVersion:
-			if pos != 0 {
-				return nil, fmt.Errorf("parse err: duplicate or position err of Affected Version title")
-			} else {
-				pos++
-			}
-		case lexer.FixedVersion:
-			if pos != 0 {
-				return nil, fmt.Errorf("parse err: duplicate or position err of Fixed Version title")
-			} else {
-				pos++
-			}
 		case lexer.LBRACK:
 			versionsIn, length, err := parseIndexVersion(tokens[pos:])
 			if err != nil {
@@ -40,11 +33,21 @@ func Parse(tokens []lexmachine.Token) ([]model.Version, error) {
 		case lexer.COLON, lexer.RBRACK:
 			return nil, fmt.Errorf("parse err: have %s in wrong position ", string(tokens[pos].Lexeme))
 		case lexer.VERSION:
-			version, err := model.ParseVersionFromStr(string(tokens[pos].Lexeme))
+			version, err := model.ParseVersionFromRegularStr(string(tokens[pos].Lexeme))
 			if err != nil {
 				return nil, err
 			}
 			versions = append(versions, version)
+			pos++
+		case lexer.MASTER:
+			versions = append(versions, model.Version{
+				Code: model.Master,
+			})
+			pos++
+		case lexer.UNRELEASED:
+			versions = append(versions, model.Version{
+				Code: model.Unreleased,
+			})
 			pos++
 		default:
 			panic(fmt.Errorf("I do not know what happen but it must be wrong ,"+
@@ -57,6 +60,7 @@ func Parse(tokens []lexmachine.Token) ([]model.Version, error) {
 	}
 }
 
+// IndexVersion => ( [VERSION : VERSION] | [ : VERSION] | [VERSION])
 func parseIndexVersion(tokens []lexmachine.Token) ([]model.Version, int, error) {
 	//[ v : v ]
 	//0 1 2 3 4 5
@@ -64,23 +68,23 @@ func parseIndexVersion(tokens []lexmachine.Token) ([]model.Version, int, error) 
 		tokens[3].Type == lexer.VERSION &&
 		tokens[2].Type == lexer.COLON &&
 		tokens[1].Type == lexer.VERSION {
-		firstVersion, err := model.ParseVersionFromStr(string(tokens[1].Lexeme))
+		firstVersion, err := model.ParseVersionFromRegularStr(string(tokens[1].Lexeme))
 		if err != nil {
 			return nil, 0, err
 		}
-		lastVersion, err := model.ParseVersionFromStr(string(tokens[3].Lexeme))
+		lastVersion, err := model.ParseVersionFromRegularStr(string(tokens[3].Lexeme))
 		if err != nil {
 			return nil, 0, err
 		}
-		if firstVersion.Main == lastVersion.Main &&
-			firstVersion.Sub == lastVersion.Sub &&
-			firstVersion.Fix <= lastVersion.Fix {
-			versions := make([]model.Version, lastVersion.Fix-firstVersion.Fix+1)
+		if firstVersion.Major == lastVersion.Major &&
+			firstVersion.Minor == lastVersion.Minor &&
+			firstVersion.Patch <= lastVersion.Patch {
+			versions := make([]model.Version, lastVersion.Patch-firstVersion.Patch+1)
 			for i, _ := range versions {
 				versions[i] = model.Version{
-					Main: firstVersion.Main,
-					Sub:  firstVersion.Sub,
-					Fix:  firstVersion.Fix + i,
+					Major: firstVersion.Major,
+					Minor: firstVersion.Minor,
+					Patch: firstVersion.Patch + i,
 				}
 			}
 			return versions, 5, nil
@@ -94,16 +98,16 @@ func parseIndexVersion(tokens []lexmachine.Token) ([]model.Version, int, error) 
 	if FindFirstToken(tokens, lexer.RBRACK) == 3 &&
 		tokens[2].Type == lexer.VERSION &&
 		tokens[1].Type == lexer.COLON {
-		lastVersion, err := model.ParseVersionFromStr(string(tokens[2].Lexeme))
+		lastVersion, err := model.ParseVersionFromRegularStr(string(tokens[2].Lexeme))
 		if err != nil {
 			return nil, 0, err
 		}
-		versions := make([]model.Version, lastVersion.Fix+1)
+		versions := make([]model.Version, lastVersion.Patch+1)
 		for i, _ := range versions {
 			versions[i] = model.Version{
-				Main: lastVersion.Main,
-				Sub:  lastVersion.Sub,
-				Fix:  i,
+				Major: lastVersion.Major,
+				Minor: lastVersion.Minor,
+				Patch: i,
 			}
 		}
 		return versions, 4, nil
@@ -113,7 +117,7 @@ func parseIndexVersion(tokens []lexmachine.Token) ([]model.Version, int, error) 
 	//0 1  2 3
 	if FindFirstToken(tokens, lexer.RBRACK) == 2 &&
 		tokens[1].Type == lexer.VERSION {
-		version, err := model.ParseVersionFromStr(string(tokens[1].Lexeme))
+		version, err := model.ParseVersionFromRegularStr(string(tokens[1].Lexeme))
 		if err != nil {
 			return nil, 0, err
 		}
