@@ -52,14 +52,34 @@ func initTokens() {
 		":",
 	}
 	Tokens = append(Tokens, Literals...)
-	TokenIds = make(map[string]int)
-	for i, tok := range Tokens {
-		TokenIds[tok] = i
+	TokenIds = map[string]int{
+		"COMMENT":         COMMENT,
+		"AffectedVersion": AffectedVersion,
+		"FixedVersion":    FixedVersion,
+		"VERSION":         VERSION,
+		"UNRELEASED":      UNRELEASED,
+		"MASTER":          MASTER,
+		"[":               LBRACK,
+		"]":               RBRACK,
+		":":               COLON,
 	}
 
 	Keywords = []string{
 		"#### 5. Affected versions",
 		"#### 6. Fixed versions",
+	}
+}
+
+// a lex.Action function which skips the match.
+func skip(*lex.Scanner, *machines.Match) (interface{}, error) {
+	return nil, nil
+}
+
+// a lex.Action function with constructs a Token of the given token type by
+// the token type's name.
+func token(name string) lex.Action {
+	return func(s *lex.Scanner, m *machines.Match) (interface{}, error) {
+		return s.Token(TokenIds[name], string(m.Bytes), m), nil
 	}
 }
 
@@ -100,17 +120,4 @@ func initLexer() (*lex.Lexer, error) {
 		return nil, err
 	}
 	return lexer, nil
-}
-
-// a lex.Action function which skips the match.
-func skip(*lex.Scanner, *machines.Match) (interface{}, error) {
-	return nil, nil
-}
-
-// a lex.Action function with constructs a Token of the given token type by
-// the token type's name.
-func token(name string) lex.Action {
-	return func(s *lex.Scanner, m *machines.Match) (interface{}, error) {
-		return s.Token(TokenIds[name], string(m.Bytes), m), nil
-	}
 }
