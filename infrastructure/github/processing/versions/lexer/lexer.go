@@ -30,11 +30,11 @@ const (
 	AffectedVersion     // #### 5. Affected versions
 	FixedVersion        //#### 6. Fixed versions
 	VERSION             // v?(\d+\.\d+\.\d+)
-	LBRACK              // [
-	RBRACK              // ]
-	COLON               // :
 	UNRELEASED
 	MASTER
+	LBRACK // [
+	RBRACK // ]
+	COLON  // :
 )
 
 func initTokens() {

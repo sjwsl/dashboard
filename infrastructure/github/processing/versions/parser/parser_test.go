@@ -13,7 +13,8 @@ import (
 func TestParser(t *testing.T) {
 	s, err := lexer.Lexer.Scanner([]byte(`
 #### 5. Affected versions
-[:v4.3.10] 3.5.6
+[:v4.3.3] 3.5.6
+[3.3.4:3.3.5] unreleased master
 `))
 	if err != nil {
 		log.Fatal(err)
