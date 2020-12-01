@@ -1,145 +1,152 @@
-create table ASSIGNED_ISSUE_NUM_TIMELINE
+create table comment
 (
-    DATETIME datetime not null,
-    REPO_ID int not null,
-    ASSIGNED_ISSUE_NUM int not null,
-    primary key (DATETIME, REPO_ID)
+    id int not null,
+    issue_id int not null,
+    body longtext not null,
+    primary key (id, issue_id)
 );
 
-create table COVERAGE_TIMELINE
+create table issue
 (
-    TIME datetime not null,
-    REPO varchar(20) not null,
-    COVERAGE float not null
-);
-
-create table LABEL
-(
-    ID int auto_increment
+    id int not null
         primary key,
-    NAME varchar(100) not null,
-    constraint LABEL_NAME_uindex
-        unique (NAME)
+    number int not null,
+    repository_id int not null,
+    closed tinyint(1) not null,
+    closed_at datetime null,
+    created_at datetime null,
+    title varchar(1000) not null,
+    url varchar(1000) not null,
+    constraint issue_number_repository_id_uindex
+        unique (number, repository_id)
 );
 
-create table LABEL_SEVERITY_WEIGHT
+create table issue_team
 (
-    LABEL_ID int not null,
-    WEIGHT float not null
+    issue_id int not null,
+    team_id int not null,
+    primary key (issue_id, team_id)
 );
 
-create table REPOSITORY
+create table issue_version_fixed
 (
-    ID int not null
+    issue_id int not null,
+    version_id int not null,
+    primary key (issue_id,version_id)
+);
+
+create table issue_version_affected
+(
+    issue_id int not null,
+    version_id int not null,
+    primary key (issue_id,version_id)
+);
+
+create table label
+(
+    id int auto_increment
         primary key,
-    OWNER varchar(100) not null,
-    REPO_NAME varchar(100) not null
+    name varchar(100) not null,
+    repository_id int not null,
+    constraint label_name_uindex
+        unique (name)
 );
 
-create table ISSUE
+create table issue_label
 (
-    ID int not null
+    issue_id int not null,
+    label_id int not null,
+    primary key (issue_id, label_id)
+);
+
+create table label_severity_weight
+(
+    label_id int not null,
+    weight float not null,
+    primary key (label_id, weight)
+);
+
+create table repository
+(
+    id int not null
         primary key,
-    NUMBER int not null,
-    REPOSITORY_ID int not null,
-    CLOSED tinyint(1) not null,
-    CLOSED_AT datetime null,
-    CREATED_AT datetime null,
-    TITLE varchar(1000) not null,
-    constraint ISSUE_NUMBER_REPOSITORY_ID_uindex
-        unique (NUMBER, REPOSITORY_ID),
-    constraint REPOSITORY_ID_fk
-        foreign key (REPOSITORY_ID) references REPOSITORY (ID)
-            on update cascade on delete cascade
+    owner varchar(100) not null,
+    repo_name varchar(100) not null,
+    url varchar(1000) not null
 );
 
-create table COMMENT
+create table timeline_repository
 (
-    ID int auto_increment,
-    ISSUE_ID int not null,
-    BODY longtext not null,
-    primary key (ID, ISSUE_ID),
-    constraint COMMENT_ISSUE_NUMBER_fk
-        foreign key (ISSUE_ID) references ISSUE (ID)
-            on update cascade on delete cascade
+    datetime datetime not null,
+    repository_id int not null,
+    constraint datetime
+        unique (datetime, repository_id)
 );
 
-create table COMMENT_VERSION
+create table label_sig
 (
-    COMMENT_ID int not null
+    label_id int not null,
+    label_name varchar(100) not null,
+    primary key (label_id)
+);
+
+create table team
+(
+    id int auto_increment
         primary key,
-    VERSIONS varchar(1000) null,
-    constraint COMMENT_VERSION_COMMENT_ID_fk
-        foreign key (COMMENT_ID) references COMMENT (ID)
-            on update cascade on delete cascade
+    name varchar(20) not null,
+    size int null
 );
 
-create table LABEL_ISSUE_RELATIONSHIP
+create table team_label
 (
-    LABEL_ID int not null,
-    ISSUE_ID int not null,
-    primary key (LABEL_ID, ISSUE_ID),
-    constraint ISSUE_LABEL_RELATIONSHIP_ISSUE_ID_fk
-        foreign key (ISSUE_ID) references ISSUE (ID)
-            on update cascade on delete cascade,
-    constraint ISSUE_LABEL_RELATIONSHIP_LABEL_ID_fk
-        foreign key (LABEL_ID) references LABEL (ID)
-            on update cascade on delete cascade
+    team_id int not null,
+    repository_id int not null,
+    label_id int not null,
+    primary key (label_id, team_id)
 );
 
-create table REPO_VERSION
+create table timeline
 (
-    TAG varchar(100) not null,
-    REPO_ID int not null,
-    primary key (TAG, REPO_ID)
+    datetime datetime not null,
+    constraint datetime
+        unique (datetime)
 );
 
-create table SIG
+create table user
 (
-    REPO_NAME varchar(100) null,
-    LABEL_NAME varchar(100) null
-);
-
-create table TEAM
-(
-    ID int auto_increment
+    id int not null
         primary key,
-    NAME varchar(20) not null,
-    SIZE int null
+    login_name varchar(100) not null,
+    email varchar(100) not null,
+    constraint user_login_name_uindex
+        unique (login_name)
 );
 
-create table TEAM_LABEL_RELATIONSHIP
+create table user_issue
 (
-    TEAM_ID int not null,
-    REPOSITORY_ID int not null,
-    LABEL_ID int not null,
-    primary key (LABEL_ID, TEAM_ID),
-    constraint TEAM_LABEL_RELATIONSHIP_LABEL_ID_fk
-        foreign key (LABEL_ID) references LABEL (ID),
-    constraint TEAM_LABEL_RELATIONSHIP_TEAM_ID_fk
-        foreign key (TEAM_ID) references TEAM (ID)
+    user_id int not null,
+    issue_id int not null,
+    primary key (user_id, issue_id)
 );
 
-create table USER
+create table version
 (
-    ID int auto_increment
+    id int not null
         primary key,
-    LOGIN_NAME varchar(100) not null,
-    EMAIL varchar(100) not null,
-    constraint USER_LOGIN_NAME_uindex
-        unique (LOGIN_NAME)
+    major int not null,
+    minor int not null,
+    patch int not null,
+    tag_id int not null,
+    constraint major
+        unique (major, minor, patch)
 );
 
-create table ASSIGNEE
+create table tag
 (
-    USER_ID int not null,
-    ISSUE_ID int not null,
-    primary key (USER_ID, ISSUE_ID),
-    constraint ASSIGNEE_ISSUE_ID_fk
-        foreign key (ISSUE_ID) references ISSUE (ID)
-            on update cascade on delete cascade,
-    constraint ASSIGNEE_USER_ID_fk
-        foreign key (USER_ID) references USER (ID)
-            on update cascade on delete cascade
+    id int auto_increment
+        primary key,
+    name varchar(100) not null,
+    repository_id int not null,
+    constraint name unique (name)
 );
-

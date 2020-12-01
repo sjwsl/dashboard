@@ -4,26 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
-	"strings"
-	"time"
-
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/shurcooL/githubv4"
-
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
-	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
+	crawlerConfig "github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
+	dbConfig "github.com/PingCAP-QE/dashboard/infrastructure/github/database/config"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/insert"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/truncate"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
 var err error
 
 // init Set mysql database connection
-func init() {
-	MYSQLEnvString := os.Getenv("MYSQL_URI")
-	db, err = sql.Open("mysql", MYSQLEnvString)
+func initDB(c dbConfig.Config) {
+	db, err = sql.Open("mysql", c.DatabaseUrl)
 	if err != nil {
 		panic(err)
 	}
@@ -38,20 +35,13 @@ func init() {
 }
 
 // Fetch fetch all data
-func Fetch(owner, reponame string) *model.Query {
-	tokenEnvString := os.Getenv("GITHUB_TOKEN")
-	tokens := strings.Split(tokenEnvString, ":")
-
-	client.InitClient(config.Config{
-		GraphqlPath:   "./infrastructure/github/crawler/graphql/query.graphql",
-		ServerUrl:     "https://api.github.com/graphql",
-		Authorization: tokens,
-	})
+func FetchQuery(c crawlerConfig.Config, owner, name string) model.Query {
+	client.InitClient(c)
 	request := client.NewClient()
 
 	opt := crawler.FetchOption{
 		Owner:    owner,
-		RepoName: reponame,
+		RepoName: name,
 		IssueFilters: map[string]interface{}{
 			"states": []string{"CLOSED", "OPEN"},
 		},
@@ -62,82 +52,82 @@ func Fetch(owner, reponame string) *model.Query {
 }
 
 // insertData insert all the data fetched from database
-func insertData(owner, repoName string, since githubv4.DateTime) {
-	totalData := Fetch(owner, repoName)
+func InsertQuery(tx *sql.Tx, totalData model.Query, owner string, c *config.Config) {
+	insert.Repository(tx, totalData.Repository, owner)
 
-	insertRepositoryData(db, totalData, owner, repoName)
-	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: 0,
-		ReadOnly:  false,
-	})
+	insert.Timeline(tx, c)
+	insert.TimelineRepository(tx, totalData.Repository)
 
-	InsertTags(tx, totalData)
+	for _, user := range totalData.Repository.AssignableUsers.Nodes {
+		insert.User(tx, user)
+	}
+
+	for _, label := range totalData.Repository.Labels.Nodes {
+		insert.Label(tx, totalData.Repository, label)
+		insert.LabelSig(tx, label)
+	}
+
+	for _, weight := range c.LabelSeverityWeight {
+		insert.LabelSeverityWeight(tx, weight)
+	}
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
-		deleteIssueData(tx, issue)
-		insertIssueData(tx, totalData, issue)
-		insertUserDataAndRelationshipWithIssue(tx, issue)
-		insertLabelDataAndRelationshipWithIssue(tx, issue)
-		insertCommentData(tx, issue)
-		insertCrossReferenceEvent(tx, issue)
+		insert.Issue(tx, totalData.Repository, issue)
+		for _, issueComment := range issue.Comments.Nodes {
+			insert.Comment(tx, issue, issueComment)
+		}
 	}
-	insertAssignedIssueNumTimeLine(tx, totalData)
-	InsertCommentVersion(tx)
+
+	for _, ref := range totalData.Repository.Refs.Nodes {
+		insert.Tag(tx, totalData.Repository, ref)
+		insert.Version(tx, ref)
+	}
+
+	for _, issue := range totalData.Repository.Issues.Nodes {
+		for _, issueComment := range issue.Comments.Nodes {
+			insert.Comment(tx, issue, issueComment)
+			insert.IssueVersion(tx, issue, &issueComment.Body)
+		}
+	}
+
+	for _, issue := range totalData.Repository.Issues.Nodes {
+		for _, label := range issue.Labels.Nodes {
+			insert.IssueLabel(tx, issue, label)
+		}
+	}
+
+	for _, issue := range totalData.Repository.Issues.Nodes {
+		for _, user := range issue.Assignees.Nodes {
+			insert.UserIssue(tx, issue, user)
+		}
+	}
 
 	err = tx.Commit()
 	fmt.Println(err)
 }
 
-type repository struct {
-	owner string
-	name  string
-}
-
-var DBList = []repository{{
-	owner: "tikv",
-	name:  "tikv",
-}, {
-	owner: "tikv",
-	name:  "pd",
-}, {
-	owner: "pingcap",
-	name:  "tidb",
-}, {
-	owner: "pingcap",
-	name:  "dm",
-}, {
-	owner: "pingcap",
-	name:  "ticdc",
-}, {
-	owner: "pingcap",
-	name:  "br",
-}, {
-	owner: "pingcap",
-	name:  "tidb-lightning",
-}}
-
 // RunInfrastructure fetch all the data first and then fetch data 10 days before.
-func RunInfrastructure() {
-	for _, r := range DBList {
-		insertData(r.owner, r.name, githubv4.DateTime{})
+func RunInfrastructure(c config.Config) {
+
+	initDB(c.DatabaseConfig)
+
+	queries := make([]model.Query, len(c.RepositoryArgs))
+	for i, repositoryArg := range c.RepositoryArgs {
+		queries[i] = FetchQuery(c.CrawlerConfig, repositoryArg.Owner, repositoryArg.Name)
 	}
 
-	fmt.Printf(
-		`
-###########################################################################################
-init db ok %v
-###########################################################################################
-`, time.Now())
-	for {
-		time.Sleep(time.Hour)
-		for _, r := range DBList {
-			insertData(r.owner, r.name, githubv4.DateTime{})
-		}
-		fmt.Printf(
-			`
-###########################################################################################
-update database %v
-###########################################################################################
-`, time.Now())
+	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
+		Isolation: 0,
+		ReadOnly:  false,
+	})
+	if err != nil {
+		panic(err)
 	}
+
+	truncate.AllClear(tx)
+
+	for i, query := range queries {
+		InsertQuery(tx, query, c.RepositoryArgs[i].Owner, &c)
+	}
+
 }

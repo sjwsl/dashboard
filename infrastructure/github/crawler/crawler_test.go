@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
 	"os"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 func TestFetchIssuesByRepo(t *testing.T) {
 	tokenEnvString := os.Getenv("GITHUB_TOKEN")
+	tokenEnvString = "16e7d7c387fb1a53aa36010dcb466ddcd5b521ff"
 	tokens := strings.Split(tokenEnvString, ":")
 
 	client.InitClient(config.Config{
@@ -30,7 +32,7 @@ func TestFetchIssuesByRepo(t *testing.T) {
 			"labels": []string{"type/bug"}},
 	}
 
-	totalData := FetchByRepo(request, opt)
-	QueryCompletenessSpec(totalData)
-	QueryDataInvalidSpec(totalData)
+	totalData := FetchRepo(request, opt)
+	util.QueryCompletenessSpec(&totalData)
+	util.QueryDataInvalidSpec(&totalData)
 }

@@ -6,11 +6,7 @@ import (
 )
 
 func TestParseVersionFromTokens(t *testing.T) {
-	tokens, err := ScanTokensFromBody(testBody)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(ParseVersionFromTokens(tokens))
+	fmt.Println(GetVersions(&testBody))
 }
 
 var testBody = `## Please edit this comment to complete the following information
@@ -60,9 +56,9 @@ Notes:
 Example 1: [v3.0.1:v3.0.5], [v4.0.1:v4.0.5]
 Example 2: unreleased
 -->
-[v3.0.0:v3.0.19]
+[v3.0.0:v3.0.19] unreleased
 #### 6. Fixed versions
-v3.0.20
+v3.0.20master
 <!--
 The first released version that contains this fix in each minor version. If the bug's affected version has been released, the fixed version should be a detailed version number; If the bug doesn't affect any released version, the fixed version can be "master";
 

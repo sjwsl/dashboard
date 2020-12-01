@@ -3,8 +3,10 @@ package client
 import (
 	"context"
 	"fmt"
+	"github.com/google/martian/log"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/machinebox/graphql"
 
@@ -57,6 +59,8 @@ func CheckConfig(c config.Config) {
 
 	_, err = os.Open(c.GraphqlPath)
 	if err != nil {
+		absPath, _ := filepath.Abs(c.GraphqlPath)
+		log.Errorf("%s", absPath)
 		panic(err)
 	}
 
