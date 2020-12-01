@@ -42,17 +42,23 @@ func IssueVersion(db *sql.Tx, issue *model.Issue, body *string) {
 	}
 
 	for _, version := range affectedVersions {
-		issueVersionAffected(db, issue, &version)
+		err := issueVersionAffected(db, issue, &version)
+		if err != nil {
+			fmt.Println(err, *body)
+		}
 	}
 	for _, version := range fixedVersions {
-		issueVersionFixed(db, issue, &version)
+		err := issueVersionFixed(db, issue, &version)
+		if err != nil {
+			fmt.Println(err, *body)
+		}
 	}
 }
 
-func issueVersionAffected(db *sql.Tx, issue *model.Issue, version *model2.Version) {
+func issueVersionAffected(db *sql.Tx, issue *model.Issue, version *model2.Version) error {
 	versionDatabaseID, err := util.GenIDFromVersion(*version)
 	if err != nil {
-		return
+		return nil
 	}
 	_, err = db.Exec(`
 insert into issue_version_affected 
@@ -60,14 +66,15 @@ insert into issue_version_affected
 values (?,?)`,
 		issue.DatabaseID, versionDatabaseID)
 	if err != nil {
-		fmt.Println("Insert fail while insert into issue_version_affected (issue_id, version_id)")
+		return fmt.Errorf(" insert fail while insert into issue_version_affected (issue_id, version_id) , %v", err)
 	}
+	return nil
 }
 
-func issueVersionFixed(db *sql.Tx, issue *model.Issue, version *model2.Version) {
+func issueVersionFixed(db *sql.Tx, issue *model.Issue, version *model2.Version) error {
 	versionDatabaseID, err := util.GenIDFromVersion(*version)
 	if err != nil {
-		return
+		return nil
 	}
 	_, err = db.Exec(`
 insert into issue_version_fixed
@@ -75,6 +82,7 @@ insert into issue_version_fixed
 values (?,?);`,
 		issue.DatabaseID, versionDatabaseID)
 	if err != nil {
-		fmt.Println("Insert fail while insert into issue_version_fixed (issue_id, version_id)")
+		return fmt.Errorf(" insert fail while insert into issue_version_fixed (issue_id, version_id), %v", err)
 	}
+	return nil
 }
