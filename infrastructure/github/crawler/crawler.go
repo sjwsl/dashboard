@@ -22,8 +22,14 @@ type FetchOption struct {
 // FetchByRepoSafe Fetch all the data and then check the data.
 func FetchByRepoSafe(request client.Request, opt FetchOption) model.Query {
 	totalData := FetchRepo(request, opt)
-	util.QueryCompletenessSpec(&totalData)
-	util.QueryDataInvalidSpec(&totalData)
+	err := util.QueryCompletenessSpec(&totalData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = util.QueryDataInvalidSpec(&totalData)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return totalData
 }
 
