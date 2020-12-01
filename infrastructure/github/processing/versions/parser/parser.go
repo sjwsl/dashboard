@@ -24,6 +24,8 @@ func Parse(tokens []lexmachine.Token) ([]model.Version, error) {
 		switch tokens[pos].Type {
 		case lexer.COMMENT:
 			pos++
+		case lexer.DOT:
+			pos++
 		case lexer.LBRACK:
 			versionsIn, length, err := parseIndexVersion(tokens[pos:])
 			if err != nil {

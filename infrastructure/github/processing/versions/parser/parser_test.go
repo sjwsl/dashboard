@@ -13,6 +13,7 @@ import (
 func TestParser(t *testing.T) {
 	s, err := lexer.Lexer.Scanner([]byte(`
 #### 5. Affected versions
+
 `))
 	if err != nil {
 		log.Fatal(err)

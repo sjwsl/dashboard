@@ -35,6 +35,7 @@ const (
 	LBRACK // [
 	RBRACK // ]
 	COLON  // :
+	DOT    // ,
 )
 
 func initTokens() {
@@ -50,6 +51,7 @@ func initTokens() {
 		"[",
 		"]",
 		":",
+		",",
 	}
 	Tokens = append(Tokens, Literals...)
 	TokenIds = map[string]int{
@@ -62,6 +64,7 @@ func initTokens() {
 		"[":               LBRACK,
 		"]":               RBRACK,
 		":":               COLON,
+		",":               DOT,
 	}
 
 	Keywords = []string{
@@ -93,8 +96,8 @@ func initLexer() (*lex.Lexer, error) {
 	}
 	lexer.Add([]byte(Keywords[0]), token(`AffectedVersion`))
 	lexer.Add([]byte(Keywords[1]), token(`FixedVersion`))
-	lexer.Add([]byte(`unreleased`), token(`UNRELEASED`))
-	lexer.Add([]byte(`master`), token(`MASTER`))
+	lexer.Add([]byte(`[Uu]nreleased`), token(`UNRELEASED`))
+	lexer.Add([]byte(`[Mm]aster`), token(`MASTER`))
 
 	// ignore the comment
 	lexer.Add([]byte(`<!--`),
