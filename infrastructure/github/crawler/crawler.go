@@ -106,7 +106,7 @@ func FetchRepo(request client.Request, opt FetchOption) model.Query {
 	if opt.First != nil {
 		totalCount = math.Min(totalCount, *opt.First)
 	}
-	log.Printf("Get data label count: %d \n", totalCount)
+	log.Printf("Get data user count: %d \n", totalCount)
 	FetchUserByRepo(request, totalCount, v, &totalData)
 	return totalData
 }

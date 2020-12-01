@@ -18,7 +18,7 @@ insert into tag (name,repository_id) values (?,?);`,
 }
 
 func Version(db *sql.Tx, tag *model.Ref) {
-	version, err := model2.ParseVersionFromRegularStr(tag.Name)
+	version, err := model2.ParseVersionFromRegularStrMustHaveV(tag.Name)
 	if err != nil {
 		return
 	}
@@ -27,11 +27,9 @@ func Version(db *sql.Tx, tag *model.Ref) {
 		fmt.Println(err)
 	}
 	_, err = db.Exec(`
-insert into version (id,major, minor, patch, tag_id)
-SELECT ?,?,?,?,tag.id
-FROM tag
-WHERE name = ?;`,
-		DatabaseID, version.Major, version.Minor, version.Patch, tag.Name)
+insert into version (id,major, minor, patch)
+VALUES (?,?,?,?) on duplicate key update id=?;;`,
+		DatabaseID, version.Major, version.Minor, version.Patch, DatabaseID)
 	if err != nil {
 		fmt.Println("Insert fail while insert into insert into version (major, minor, patch, tag_id) ", err)
 	}

@@ -23,12 +23,13 @@ values (?,?,?,?,?,?,?,?);`,
 	}
 }
 
-func IssueLabel(db *sql.Tx, issue *model.Issue, label *model.Label) {
+func IssueLabel(db *sql.Tx, repo *model.Repository, issue *model.Issue, label *model.Label) {
 	_, err := db.Exec(`
 insert into issue_label (issue_id,label_id)
 select ?, label.id
-from label where label.name = ?;`,
-		issue.DatabaseID, label.Name)
+from label where label.name = ? and
+                 repository_id = ?;`,
+		issue.DatabaseID, label.Name, repo.DatabaseID)
 	if err != nil {
 		fmt.Println("Insert fail while insert into issue_label (issue_id,label_id)", err)
 	}

@@ -115,14 +115,14 @@ func NotEmptyStrInQuery(v Value, fieldName string) bool {
 }
 
 // QueryCompletenessSpec check completeness of issue numbers & tag names.
-func QueryCompletenessSpec(totalData *model.Query) {
+func QueryCompletenessSpec(totalData *model.Query) error {
 	nums := make([]int, len(totalData.Repository.Issues.Nodes))
 	for i, _ := range nums {
 		nums[i] = totalData.Repository.Issues.Nodes[i].Number
 	}
 	err := IdCompletenessProof(totalData.Repository.Issues.TotalCount, nums)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	nums = make([]int, len(totalData.Repository.AssignableUsers.Nodes))
@@ -131,16 +131,16 @@ func QueryCompletenessSpec(totalData *model.Query) {
 	}
 	err = IdCompletenessProof(totalData.Repository.AssignableUsers.TotalCount, nums)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	names := make([]string, len(totalData.Repository.Labels.Nodes))
-	for i, _ := range nums {
+	for i, _ := range names {
 		names[i] = totalData.Repository.Labels.Nodes[i].Name
 	}
 	err = NameCompletenessProof(totalData.Repository.Labels.TotalCount, names)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	names = make([]string, len(totalData.Repository.Refs.Nodes))
@@ -149,13 +149,16 @@ func QueryCompletenessSpec(totalData *model.Query) {
 	}
 	err = NameCompletenessProof(totalData.Repository.Refs.TotalCount, names)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 // QueryDataInvalidSpec check if data is invalid, because of no name or other important fields.
-func QueryDataInvalidSpec(totalData *model.Query) {
+func QueryDataInvalidSpec(totalData *model.Query) error {
 	if !NotEmptyStrInQuery(ValueOf(totalData), "") {
-		panic("invalid data leak")
+		return fmt.Errorf("invalid data leak")
 	}
+	return nil
 }

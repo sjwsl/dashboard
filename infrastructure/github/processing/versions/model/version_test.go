@@ -6,5 +6,5 @@ import (
 )
 
 func TestParseVersionFromRegularStr(t *testing.T) {
-	fmt.Println(ParseVersionFromRegularStr("v4.4.444444444444444444"))
+	fmt.Println(ParseVersionFromRegularStrMustHaveV("v4.4.444444"))
 }

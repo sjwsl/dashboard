@@ -49,7 +49,7 @@ create table label
     name varchar(100) not null,
     repository_id int not null,
     constraint label_name_uindex
-        unique (name)
+        unique (id, name)
 );
 
 create table issue_label
@@ -63,7 +63,7 @@ create table label_severity_weight
 (
     label_id int not null,
     weight float not null,
-    primary key (label_id, weight)
+    primary key (label_id)
 );
 
 create table repository
@@ -117,10 +117,10 @@ create table user
 (
     id int not null
         primary key,
-    login_name varchar(100) not null,
+    login varchar(100) not null,
     email varchar(100) not null,
     constraint user_login_name_uindex
-        unique (login_name)
+        unique (login)
 );
 
 create table user_issue
@@ -136,10 +136,7 @@ create table version
         primary key,
     major int not null,
     minor int not null,
-    patch int not null,
-    tag_id int not null,
-    constraint major
-        unique (major, minor, patch)
+    patch int not null
 );
 
 create table tag
@@ -148,5 +145,5 @@ create table tag
         primary key,
     name varchar(100) not null,
     repository_id int not null,
-    constraint name unique (name)
+    constraint name unique (name,repository_id)
 );

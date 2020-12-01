@@ -13,9 +13,9 @@ func Timeline(db *sql.Tx, config *config.Config) {
 	for _, time := range timelines.Times {
 		_, err := db.Exec(`
 insert into timeline (datetime)
-values (?);`, time)
+values (?) on duplicate key update datetime=?;`, time, time)
 		if err != nil {
-			fmt.Println("Insert fail while insert into timeline (datetime)")
+			fmt.Println("Insert fail while insert into timeline (datetime)", err)
 		}
 	}
 }
@@ -27,7 +27,7 @@ func TimelineRepository(db *sql.Tx, repository *model.Repository) {
 insert into timeline_repository (datetime,repository_id)
 values (?,?);`, time, repository.DatabaseID)
 		if err != nil {
-			fmt.Println("Insert fail while insert into repository_timeline (datetime,repository_id)")
+			fmt.Println("Insert fail while insert into repository_timeline (datetime,repository_id)", err)
 		}
 	}
 }

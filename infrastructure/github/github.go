@@ -38,7 +38,6 @@ func initDB(c dbConfig.Config) {
 func FetchQuery(c crawlerConfig.Config, owner, name string) model.Query {
 	client.InitClient(c)
 	request := client.NewClient()
-
 	opt := crawler.FetchOption{
 		Owner:    owner,
 		RepoName: name,
@@ -64,11 +63,11 @@ func InsertQuery(tx *sql.Tx, totalData model.Query, owner string, c *config.Conf
 
 	for _, label := range totalData.Repository.Labels.Nodes {
 		insert.Label(tx, totalData.Repository, label)
-		insert.LabelSig(tx, label)
+		insert.LabelSig(tx, totalData.Repository, label)
 	}
 
 	for _, weight := range c.LabelSeverityWeight {
-		insert.LabelSeverityWeight(tx, weight)
+		insert.LabelSeverityWeight(tx, totalData.Repository, weight)
 	}
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
@@ -85,14 +84,13 @@ func InsertQuery(tx *sql.Tx, totalData model.Query, owner string, c *config.Conf
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
 		for _, issueComment := range issue.Comments.Nodes {
-			insert.Comment(tx, issue, issueComment)
 			insert.IssueVersion(tx, issue, &issueComment.Body)
 		}
 	}
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
 		for _, label := range issue.Labels.Nodes {
-			insert.IssueLabel(tx, issue, label)
+			insert.IssueLabel(tx, totalData.Repository, issue, label)
 		}
 	}
 
@@ -101,9 +99,6 @@ func InsertQuery(tx *sql.Tx, totalData model.Query, owner string, c *config.Conf
 			insert.UserIssue(tx, issue, user)
 		}
 	}
-
-	err = tx.Commit()
-	fmt.Println(err)
 }
 
 // RunInfrastructure fetch all the data first and then fetch data 10 days before.
@@ -116,18 +111,21 @@ func RunInfrastructure(c config.Config) {
 		queries[i] = FetchQuery(c.CrawlerConfig, repositoryArg.Owner, repositoryArg.Name)
 	}
 
+	if err != nil {
+		panic(err)
+	}
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
 		Isolation: 0,
 		ReadOnly:  false,
 	})
-	if err != nil {
-		panic(err)
-	}
-
 	truncate.AllClear(tx)
 
 	for i, query := range queries {
 		InsertQuery(tx, query, c.RepositoryArgs[i].Owner, &c)
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
