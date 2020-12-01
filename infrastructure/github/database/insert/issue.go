@@ -44,13 +44,19 @@ func IssueVersion(db *sql.Tx, issue *model.Issue, body *string) {
 	for _, version := range affectedVersions {
 		err := issueVersionAffected(db, issue, &version)
 		if err != nil {
-			fmt.Println(err, *body)
+			fmt.Println(err)
+			fmt.Println(*body)
+			fmt.Println(issue.Number)
+			fmt.Println("###########################")
 		}
 	}
 	for _, version := range fixedVersions {
 		err := issueVersionFixed(db, issue, &version)
 		if err != nil {
-			fmt.Println(err, *body)
+			fmt.Println(err)
+			fmt.Println(*body)
+			fmt.Println(issue.Number)
+			fmt.Println("###########################")
 		}
 	}
 }
