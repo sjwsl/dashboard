@@ -2,10 +2,8 @@ package crawler
 
 import (
 	"context"
-	"log"
-	"reflect"
-
 	"github.com/pkg/math"
+	"log"
 
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
@@ -22,25 +20,45 @@ type FetchOption struct {
 }
 
 // FetchByRepoSafe Fetch all the data and then check the data.
-func FetchByRepoSafe(request client.Request, opt FetchOption) *model.Query {
-	totalData := FetchByRepo(request, opt)
-	QueryCompletenessSpec(totalData)
-	QueryDataInvalidSpec(totalData)
+func FetchByRepoSafe(request client.Request, opt FetchOption) model.Query {
+	totalData := FetchRepo(request, opt)
+	err := util.QueryCompletenessSpec(&totalData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = util.QueryDataInvalidSpec(&totalData)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return totalData
 }
 
-// FetchByRepo Fetch all the Query data necessary with FetchOption and request.
-func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
+// pingCountByRepo ping the graphql server to get  count infos of issues and tags.
+func pingCountByRepo(request client.Request, variable map[string]interface{}) (model.Query, error) {
+	var data model.Query
+	err := request.QueryWithAuthPool(context.Background(), &data, variable)
+	if err != nil {
+		panic(err)
+	}
+	return data, nil
+}
+
+// FetchRepo Fetch Repo necessary with FetchOption and request.
+func FetchRepo(request client.Request, opt FetchOption) model.Query {
 	// v is arguments rely on query in infrastructure/github/crawler/graphql/query.graphql
 	v := map[string]interface{}{
 		"owner":           opt.Owner,
 		"repo_name":       opt.RepoName,
 		"issueFilters":    opt.IssueFilters,
+		"userAfter":       nil,
 		"issueAfter":      nil,
 		"commentAfter":    nil,
+		"labelAfter":      nil,
 		"tagAfter":        nil,
+		"userPageSize":    0,
 		"IssuePageSize":   0,
 		"CommentPageSize": 0,
+		"labelPageSize":   0,
 		"tagPageSize":     0,
 	}
 
@@ -61,6 +79,42 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 		totalCount = math.Min(totalCount, *opt.First)
 	}
 	log.Printf("Get data issue count: %d \n", totalCount)
+	FetchIssueByRepo(request, totalCount, v, &totalData)
+
+	v["tagPageSize"] = maxGithubPageSize
+	v["IssuePageSize"] = 0
+	v["CommentPageSize"] = 0
+	totalCount = totalCountData.Repository.Refs.TotalCount
+	if opt.First != nil {
+		totalCount = math.Min(totalCount, *opt.First)
+	}
+	log.Printf("Get data Tag count: %d \n", totalCount)
+	FetchTagByRepo(request, totalCount, v, &totalData)
+
+	v["labelPageSize"] = maxGithubPageSize
+	v["tagPageSize"] = 0
+	totalCount = totalCountData.Repository.Labels.TotalCount
+	if opt.First != nil {
+		totalCount = math.Min(totalCount, *opt.First)
+	}
+	log.Printf("Get data label count: %d \n", totalCount)
+	FetchLabelByRepo(request, totalCount, v, &totalData)
+
+	v["userPageSize"] = maxGithubPageSize
+	v["labelPageSize"] = 0
+	totalCount = totalCountData.Repository.AssignableUsers.TotalCount
+	if opt.First != nil {
+		totalCount = math.Min(totalCount, *opt.First)
+	}
+	log.Printf("Get data user count: %d \n", totalCount)
+	FetchUserByRepo(request, totalCount, v, &totalData)
+	return totalData
+}
+
+// FetchIssueByRepo Fetch all the Query issues necessary.
+func FetchIssueByRepo(request client.Request,
+	totalCount int, v map[string]interface{}, query *model.Query) {
+	log.Printf("Get data issue count: %d \n", totalCount)
 	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
 		log.Printf("<Fetching issue data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
 		v["IssuePageSize"] = math.Min(totalCount-count, maxGithubPageSize)
@@ -79,22 +133,19 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 			}
 		}
 		log.Printf("Fetch success.>\n")
-		totalData.Repository.Issues.Nodes = append(totalData.Repository.Issues.Nodes, respData.Repository.Issues.Nodes...)
+		query.Repository.Issues.Nodes = append(query.Repository.Issues.Nodes, respData.Repository.Issues.Nodes...)
 		if !respData.Repository.Issues.PageInfo.HasNextPage {
 			break
 		}
 		v["issueAfter"] = respData.Repository.Issues.PageInfo.EndCursor
 	}
-	totalData.Repository.Issues.TotalCount = totalCount
 
-	v["tagPageSize"] = maxGithubPageSize
-	v["IssuePageSize"] = 0
-	v["CommentPageSize"] = 0
-	totalCount = totalCountData.Repository.Refs.TotalCount
-	if opt.First != nil {
-		totalCount = math.Min(totalCount, *opt.First)
-	}
-	log.Printf("Get data Tag count: %d \n", totalCount)
+	query.Repository.Issues.TotalCount = totalCount
+}
+
+// FetchTagByRepo Fetch all the Tag necessary.
+func FetchTagByRepo(request client.Request,
+	totalCount int, v map[string]interface{}, query *model.Query) {
 	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
 		log.Printf("<Fetching tag data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
 		v["tagPageSize"] = math.Min(totalCount-count, maxGithubPageSize)
@@ -113,50 +164,71 @@ func FetchByRepo(request client.Request, opt FetchOption) *model.Query {
 			}
 		}
 		log.Printf("Fetch success.>\n")
-		totalData.Repository.Refs.Nodes = append(totalData.Repository.Refs.Nodes, respData.Repository.Refs.Nodes...)
+		query.Repository.Refs.Nodes = append(query.Repository.Refs.Nodes, respData.Repository.Refs.Nodes...)
 		if !respData.Repository.Refs.PageInfo.HasNextPage {
 			break
 		}
 		v["tagAfter"] = respData.Repository.Refs.PageInfo.EndCursor
 	}
-	totalData.Repository.Refs.TotalCount = totalCount
-
-	return &totalData
+	query.Repository.Refs.TotalCount = totalCount
 }
 
-// pingCountByRepo ping the graphql server to get  count infos of issues and tags.
-func pingCountByRepo(request client.Request, variable map[string]interface{}) (model.Query, error) {
-	var data model.Query
-	err := request.QueryWithAuthPool(context.Background(), &data, variable)
-	if err != nil {
-		panic(err)
+// FetchLabelByRepo Fetch all the Label necessary.
+func FetchLabelByRepo(request client.Request,
+	totalCount int, v map[string]interface{}, query *model.Query) {
+	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
+		log.Printf("<Fetching Label data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
+		v["labelPageSize"] = math.Min(totalCount-count, maxGithubPageSize)
+		var respData model.Query
+		retryTimes := 10
+		for {
+			err := request.QueryWithAuthPool(context.Background(), &respData, v)
+			if err != nil {
+				log.Printf(err.Error()+" \n query variables: %v \n retry time: %d", v, retryTimes)
+			} else {
+				break
+			}
+			retryTimes--
+			if retryTimes == 0 {
+				log.Fatal(err.Error()+" \n query variables: %v \n retry time: %d", v, 10-retryTimes)
+			}
+		}
+		log.Printf("Fetch success.>\n")
+		query.Repository.Labels.Nodes = append(query.Repository.Labels.Nodes, respData.Repository.Labels.Nodes...)
+		if !respData.Repository.Labels.PageInfo.HasNextPage {
+			break
+		}
+		v["labelAfter"] = respData.Repository.Labels.PageInfo.EndCursor
 	}
-	return data, nil
+	query.Repository.Labels.TotalCount = totalCount
 }
 
-// QueryCompletenessSpec check completeness of issue numbers & tag names.
-func QueryCompletenessSpec(totalData *model.Query) {
-	nums := make([]int, len(totalData.Repository.Issues.Nodes))
-	for i, _ := range nums {
-		nums[i] = totalData.Repository.Issues.Nodes[i].Number
+// FetchUserByRepo Fetch all the User necessary.
+func FetchUserByRepo(request client.Request,
+	totalCount int, v map[string]interface{}, query *model.Query) {
+	for count := 0; count < totalCount; count += math.Min(totalCount-count, maxGithubPageSize) {
+		log.Printf("<Fetching User data %d to %d\n", count, count+math.Min(totalCount-count, maxGithubPageSize))
+		v["userPageSize"] = math.Min(totalCount-count, maxGithubPageSize)
+		var respData model.Query
+		retryTimes := 10
+		for {
+			err := request.QueryWithAuthPool(context.Background(), &respData, v)
+			if err != nil {
+				log.Printf(err.Error()+" \n query variables: %v \n retry time: %d", v, retryTimes)
+			} else {
+				break
+			}
+			retryTimes--
+			if retryTimes == 0 {
+				log.Fatal(err.Error()+" \n query variables: %v \n retry time: %d", v, 10-retryTimes)
+			}
+		}
+		log.Printf("Fetch success.>\n")
+		query.Repository.AssignableUsers.Nodes = append(query.Repository.AssignableUsers.Nodes, respData.Repository.AssignableUsers.Nodes...)
+		if !respData.Repository.AssignableUsers.PageInfo.HasNextPage {
+			break
+		}
+		v["userAfter"] = respData.Repository.AssignableUsers.PageInfo.EndCursor
 	}
-	err := util.IdCompletenessProof(totalData.Repository.Issues.TotalCount, nums)
-	if err != nil {
-		panic(err)
-	}
-	names := make([]string, len(totalData.Repository.Refs.Nodes))
-	for i, _ := range names {
-		names[i] = totalData.Repository.Refs.Nodes[i].Name
-	}
-	err = util.NameCompletenessProof(totalData.Repository.Refs.TotalCount, names)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// QueryDataInvalidSpec check if data is invalid, because of no name or other important fields.
-func QueryDataInvalidSpec(totalData *model.Query) {
-	if !util.NotEmptyStrInQuery(reflect.ValueOf(totalData), "") {
-		panic("invalid data leak")
-	}
+	query.Repository.AssignableUsers.TotalCount = totalCount
 }

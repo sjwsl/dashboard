@@ -13,10 +13,10 @@ import (
 
 const affectedVersionTemplate string = "#### 5. Affected versions"
 
-func ScanTokensFromBody(body string) ([]lex.Token, error) {
+func ScanTokensFromBody(body *string) ([]lex.Token, error) {
 	var strSlice string
-	if idx := strings.Index(body, affectedVersionTemplate); idx != -1 {
-		strSlice = body[idx:]
+	if idx := strings.Index(*body, affectedVersionTemplate); idx != -1 {
+		strSlice = (*body)[idx:]
 
 		scanner, err := lexer.Lexer.Scanner([]byte(strSlice))
 		if err != nil {
@@ -51,6 +51,18 @@ func ParseVersionFromTokens(tokens []lex.Token) ([]model.Version, []model.Versio
 		return nil, nil, err
 	}
 	fixedVersions, err := parser.Parse(tokens[fixedVersionIdx:])
+	if err != nil {
+		return nil, nil, err
+	}
+	return affectedVersions, fixedVersions, nil
+}
+
+func GetVersions(body *string) ([]model.Version, []model.Version, error) {
+	tokens, err := ScanTokensFromBody(body)
+	if err != nil {
+		return nil, nil, err
+	}
+	affectedVersions, fixedVersions, err := ParseVersionFromTokens(tokens)
 	if err != nil {
 		return nil, nil, err
 	}

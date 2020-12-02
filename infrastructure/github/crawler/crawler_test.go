@@ -1,8 +1,8 @@
 package crawler
 
 import (
-	"os"
-	"strings"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
+	"log"
 	"testing"
 
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
@@ -10,17 +10,14 @@ import (
 )
 
 func TestFetchIssuesByRepo(t *testing.T) {
-	tokenEnvString := os.Getenv("GITHUB_TOKEN")
-	tokens := strings.Split(tokenEnvString, ":")
-
 	client.InitClient(config.Config{
 		GraphqlPath:   "./graphql/query.graphql",
 		ServerUrl:     "https://api.github.com/graphql",
-		Authorization: tokens,
+		Authorization: []string{},
 	})
 	request := client.NewClient()
 
-	first := 101
+	first := 201
 	opt := FetchOption{
 		Owner:    "pingcap",
 		RepoName: "tidb",
@@ -30,7 +27,13 @@ func TestFetchIssuesByRepo(t *testing.T) {
 			"labels": []string{"type/bug"}},
 	}
 
-	totalData := FetchByRepo(request, opt)
-	QueryCompletenessSpec(totalData)
-	QueryDataInvalidSpec(totalData)
+	totalData := FetchRepo(request, opt)
+	err := util.QueryCompletenessSpec(&totalData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = util.QueryDataInvalidSpec(&totalData)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

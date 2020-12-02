@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 	"io/ioutil"
 	"os"
 	. "reflect"
@@ -111,4 +112,53 @@ func NotEmptyStrInQuery(v Value, fieldName string) bool {
 		panic(&ValueError{Method: "utile.NotEmptyStrInQuery catch error kind", Kind: v.Kind()})
 	}
 	return true
+}
+
+// QueryCompletenessSpec check completeness of issue numbers & tag names.
+func QueryCompletenessSpec(totalData *model.Query) error {
+	nums := make([]int, len(totalData.Repository.Issues.Nodes))
+	for i, _ := range nums {
+		nums[i] = totalData.Repository.Issues.Nodes[i].Number
+	}
+	err := IdCompletenessProof(totalData.Repository.Issues.TotalCount, nums)
+	if err != nil {
+		return err
+	}
+
+	nums = make([]int, len(totalData.Repository.AssignableUsers.Nodes))
+	for i, _ := range nums {
+		nums[i] = *totalData.Repository.AssignableUsers.Nodes[i].DatabaseID
+	}
+	err = IdCompletenessProof(totalData.Repository.AssignableUsers.TotalCount, nums)
+	if err != nil {
+		return err
+	}
+
+	names := make([]string, len(totalData.Repository.Labels.Nodes))
+	for i, _ := range names {
+		names[i] = totalData.Repository.Labels.Nodes[i].Name
+	}
+	err = NameCompletenessProof(totalData.Repository.Labels.TotalCount, names)
+	if err != nil {
+		return err
+	}
+
+	names = make([]string, len(totalData.Repository.Refs.Nodes))
+	for i, _ := range names {
+		names[i] = totalData.Repository.Refs.Nodes[i].Name
+	}
+	err = NameCompletenessProof(totalData.Repository.Refs.TotalCount, names)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// QueryDataInvalidSpec check if data is invalid, because of no name or other important fields.
+func QueryDataInvalidSpec(totalData *model.Query) error {
+	if !NotEmptyStrInQuery(ValueOf(totalData), "") {
+		return fmt.Errorf("invalid data leak")
+	}
+	return nil
 }

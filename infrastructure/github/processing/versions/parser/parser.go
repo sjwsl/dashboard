@@ -12,7 +12,7 @@ import (
 // Tokens => ( AffectedVersion | FixedVersion ) (IndexVersion | VERSION | COMMENT | MASTER | UNRELEASED)*
 func Parse(tokens []lexmachine.Token) ([]model.Version, error) {
 	var versions []model.Version
-	if len(tokens) == 0 {
+	if len(tokens) < 2 {
 		return nil, nil
 	}
 	if tokens[0].Type != lexer.AffectedVersion &&
@@ -23,6 +23,9 @@ func Parse(tokens []lexmachine.Token) ([]model.Version, error) {
 	for {
 		switch tokens[pos].Type {
 		case lexer.COMMENT:
+			pos++
+		case lexer.DOT:
+			pos++
 		case lexer.LBRACK:
 			versionsIn, length, err := parseIndexVersion(tokens[pos:])
 			if err != nil {

@@ -1,0 +1,53 @@
+CreateAtGlobal = 2015-09-06T04:01:52Z
+
+[[LabelSeverityWeight]]
+LabelName = "severity/Critical"
+Weight = 10.0
+
+[[LabelSeverityWeight]]
+LabelName = "severity/Major"
+Weight = 3.0
+
+[[LabelSeverityWeight]]
+LabelName = "severity/Moderate"
+Weight = 1.0
+
+[[LabelSeverityWeight]]
+LabelName = "severity/Minor"
+Weight = 0.1
+
+[[RepositoryArgs]]
+Owner = "tikv"
+Name = "tikv"
+
+[[RepositoryArgs]]
+Owner = "tikv"
+Name = "pd"
+
+[[RepositoryArgs]]
+Owner = "pingcap"
+Name = "tidb"
+
+[[RepositoryArgs]]
+Owner = "pingcap"
+Name = "dm"
+
+[[RepositoryArgs]]
+Owner = "pingcap"
+Name = "ticdc"
+
+[[RepositoryArgs]]
+Owner = "pingcap"
+Name = "br"
+
+[[RepositoryArgs]]
+Owner = "pingcap"
+Name = "tidb-lightning"
+
+[CrawlerConfig]
+GraphqlPath = "./infrastructure/github/crawler/graphql/query.graphql"
+ServerUrl = "https://api.github.com/graphql"
+Authorization = [""]
+
+[DatabaseConfig]
+DatabaseUrl = "root:123456@tcp(127.0.0.1:3307)/GITHUB_INFO"

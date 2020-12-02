@@ -9,9 +9,9 @@ import (
 )
 
 type Config struct {
-	GraphqlPath   string   `json:"graphql_path"`
-	ServerUrl     string   `json:"server_url"`
-	Authorization []string `json:"authorization"`
+	GraphqlPath   string
+	ServerUrl     string
+	Authorization []string
 }
 
 // FromJSON form config by json file path

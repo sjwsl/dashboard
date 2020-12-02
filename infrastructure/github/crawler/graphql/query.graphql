@@ -1,14 +1,31 @@
 query GetAll($owner : String!, $repo_name : String!,
     $issueAfter : String, $issueFilters : IssueFilters, $issueOrder : IssueOrder,
+    $userAfter : String,
     $commentAfter : String,
+    $labelAfter : String,
     $tagAfter : String,
+    $userPageSize : Int = 100,
     $IssuePageSize : Int = 100,
     $CommentPageSize : Int = 100,
+    $labelPageSize : Int = 100,
     $tagPageSize : Int = 100) {
     repository(owner: $owner, name: $repo_name) {
         databaseId
         url
         name
+        assignableUsers(after: $userAfter,
+            first: $userPageSize) {
+            nodes {
+                databaseId
+                login
+                email
+            }
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
+            totalCount
+        }
         issues(after: $issueAfter,
             filterBy: $issueFilters,
             first: $IssuePageSize,
@@ -36,46 +53,10 @@ query GetAll($owner : String!, $repo_name : String!,
                 title
                 body
                 url
-                timelineItems(first: 100) {
-                    nodes {
-                        __typename
-                        ... on CrossReferencedEvent {
-                            actor {
-                                login
-                            }
-                            createdAt
-                        }
-                        ... on AssignedEvent {
-                            actor {
-                                login
-                            }
-                            assignee {
-                                ... on User {
-                                    login
-                                    email
-                                }
-                            }
-                            createdAt
-                        }
-                        ... on UnassignedEvent {
-                            actor {
-                                login
-                            }
-                            assignee {
-                                ... on User {
-                                    login
-                                    email
-                                }
-                            }
-                            createdAt
-                        }
-                    }
-                }
                 comments(first: $CommentPageSize, after: $commentAfter) {
                     nodes {
                         databaseId
                         body
-                        viewerCanReact
                         author {
                             login
                         }
@@ -86,6 +67,16 @@ query GetAll($owner : String!, $repo_name : String!,
                     }
                     totalCount
                 }
+            }
+            pageInfo {
+                endCursor
+                hasNextPage
+            }
+            totalCount
+        }
+        labels(after: $labelAfter, first: $labelPageSize) {
+            nodes{
+                name
             }
             pageInfo {
                 endCursor
