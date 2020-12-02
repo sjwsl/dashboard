@@ -10,7 +10,7 @@ import (
 )
 
 // insert.Issue insert data into table ISSUE
-func Issue(db *sql.Tx, repo *model.Repository, issue *model.Issue) {
+func Issue(db *sql.DB, repo *model.Repository, issue *model.Issue) {
 	closeAt := util.GetIssueClosedTime(issue.Closed, issue.ClosedAt)
 	_, err := db.Exec(`
 insert into issue 
@@ -23,7 +23,7 @@ values (?,?,?,?,?,?,?,?);`,
 	}
 }
 
-func IssueLabel(db *sql.Tx, repo *model.Repository, issue *model.Issue, label *model.Label) {
+func IssueLabel(db *sql.DB, repo *model.Repository, issue *model.Issue, label *model.Label) {
 	_, err := db.Exec(`
 insert into issue_label (issue_id,label_id)
 select ?, label.id
@@ -35,7 +35,7 @@ from label where label.name = ? and
 	}
 }
 
-func IssueVersion(db *sql.Tx, issue *model.Issue, body *string) {
+func IssueVersion(db *sql.DB, issue *model.Issue, body *string) {
 	affectedVersions, fixedVersions, err := versions.GetVersions(body)
 	if err != nil {
 		return
@@ -61,7 +61,7 @@ func IssueVersion(db *sql.Tx, issue *model.Issue, body *string) {
 	}
 }
 
-func issueVersionAffected(db *sql.Tx, issue *model.Issue, version *model2.Version) error {
+func issueVersionAffected(db *sql.DB, issue *model.Issue, version *model2.Version) error {
 	versionDatabaseID, err := util.GenIDFromVersion(*version)
 	if err != nil {
 		return nil
@@ -77,7 +77,7 @@ values (?,?)`,
 	return nil
 }
 
-func issueVersionFixed(db *sql.Tx, issue *model.Issue, version *model2.Version) error {
+func issueVersionFixed(db *sql.DB, issue *model.Issue, version *model2.Version) error {
 	versionDatabaseID, err := util.GenIDFromVersion(*version)
 	if err != nil {
 		return nil

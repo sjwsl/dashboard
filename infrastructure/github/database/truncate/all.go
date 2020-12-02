@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func AllClear(db *sql.Tx) {
+func AllClear(db *sql.DB) {
 	_, err := db.Exec(`truncate table comment;`)
 	if err != nil {
 		log.Fatalf("truncate table comment fail")

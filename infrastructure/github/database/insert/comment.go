@@ -6,7 +6,7 @@ import (
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
-func Comment(db *sql.Tx, issue *model.Issue, comment *model.IssueComment) {
+func Comment(db *sql.DB, issue *model.Issue, comment *model.IssueComment) {
 	_, err := db.Exec(`
 insert into comment (id, issue_id, body) values (?,?,?);`,
 		comment.DatabaseID, issue.DatabaseID, comment.Body)

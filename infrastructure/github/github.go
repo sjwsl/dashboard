@@ -1,7 +1,6 @@
 package github
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/insert"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/truncate"
 	_ "github.com/go-sql-driver/mysql"
+	"sync"
 )
 
 var db *sql.DB
@@ -24,11 +24,10 @@ func initDB(c dbConfig.Config) {
 	if err != nil {
 		panic(err)
 	}
-	db.SetConnMaxLifetime(100)
-	db.SetMaxIdleConns(100)
+	db.SetMaxOpenConns(100)
 
 	if err := db.Ping(); err != nil {
-		fmt.Println("open database fail")
+		panic("open database fail")
 		return
 	}
 	fmt.Println("connect success")
@@ -50,55 +49,104 @@ func FetchQuery(c crawlerConfig.Config, owner, name string) model.Query {
 	return totalData
 }
 
-// insertData insert all the data fetched from database
-func InsertQuery(tx *sql.Tx, totalData model.Query, owner string, c *config.Config) {
-	insert.Repository(tx, totalData.Repository, owner)
+//insertData insert all the data fetched from database
+func InsertQuery(db *sql.DB, totalData model.Query, owner string, c *config.Config) {
+	insert.Repository(db, totalData.Repository, owner)
 
-	insert.Timeline(tx, c)
-	insert.TimelineRepository(tx, totalData.Repository)
+	insert.Timeline(db, c)
 
+	insert.TimelineRepository(db, totalData.Repository)
+	var wg sync.WaitGroup
 	for _, user := range totalData.Repository.AssignableUsers.Nodes {
-		insert.User(tx, user)
+		wg.Add(1)
+		go func(user *model.User) {
+			insert.User(db, user)
+			defer wg.Done()
+		}(user)
 	}
+	wg.Wait()
 
 	for _, label := range totalData.Repository.Labels.Nodes {
-		insert.Label(tx, totalData.Repository, label)
-		insert.LabelSig(tx, totalData.Repository, label)
+		wg.Add(1)
+		go func(label *model.Label) {
+			insert.Label(db, totalData.Repository, label)
+			insert.LabelSig(db, totalData.Repository, label)
+			defer wg.Done()
+		}(label)
 	}
+	wg.Wait()
 
 	for _, weight := range c.LabelSeverityWeight {
-		insert.LabelSeverityWeight(tx, totalData.Repository, weight)
+		wg.Add(1)
+		go func(weight config.LabelSeverityWeight) {
+			insert.LabelSeverityWeight(db, totalData.Repository, weight)
+			defer wg.Done()
+		}(weight)
 	}
+	wg.Wait()
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
-		insert.Issue(tx, totalData.Repository, issue)
+		wg.Add(1)
+		go func(issue *model.Issue) {
+			insert.Issue(db, totalData.Repository, issue)
+			defer wg.Done()
+		}(issue)
+	}
+	wg.Wait()
+
+	for _, issue := range totalData.Repository.Issues.Nodes {
 		for _, issueComment := range issue.Comments.Nodes {
-			insert.Comment(tx, issue, issueComment)
+			wg.Add(1)
+			go func(issue *model.Issue, issueComment *model.IssueComment) {
+				insert.Comment(db, issue, issueComment)
+				defer wg.Done()
+			}(issue, issueComment)
 		}
 	}
+	wg.Wait()
 
 	for _, ref := range totalData.Repository.Refs.Nodes {
-		insert.Tag(tx, totalData.Repository, ref)
-		insert.Version(tx, ref)
+		wg.Add(1)
+		go func(ref *model.Ref) {
+			insert.Tag(db, totalData.Repository, ref)
+			insert.Version(db, ref)
+			defer wg.Done()
+		}(ref)
 	}
+	wg.Wait()
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
 		for _, issueComment := range issue.Comments.Nodes {
-			insert.IssueVersion(tx, issue, &issueComment.Body)
+			wg.Add(1)
+			go func(issue *model.Issue, body *string) {
+				insert.IssueVersion(db, issue, body)
+				defer wg.Done()
+			}(issue, &issueComment.Body)
 		}
 	}
+	wg.Wait()
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
 		for _, label := range issue.Labels.Nodes {
-			insert.IssueLabel(tx, totalData.Repository, issue, label)
+			wg.Add(1)
+			go func(issue *model.Issue, label *model.Label) {
+				insert.IssueLabel(db, totalData.Repository, issue, label)
+				defer wg.Done()
+			}(issue, label)
 		}
 	}
+	wg.Wait()
 
 	for _, issue := range totalData.Repository.Issues.Nodes {
 		for _, user := range issue.Assignees.Nodes {
-			insert.UserIssue(tx, issue, user)
+			wg.Add(1)
+			go func(issue *model.Issue, user *model.User) {
+				insert.UserIssue(db, issue, user)
+				defer wg.Done()
+			}(issue, user)
 		}
 	}
+	wg.Wait()
 }
 
 // RunInfrastructure fetch all the data first and then fetch data 10 days before.
@@ -114,17 +162,13 @@ func RunInfrastructure(c config.Config) {
 	if err != nil {
 		panic(err)
 	}
-	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: 0,
-		ReadOnly:  false,
-	})
-	truncate.AllClear(tx)
+
+	truncate.AllClear(db)
 
 	for i, query := range queries {
-		InsertQuery(tx, query, c.RepositoryArgs[i].Owner, &c)
+		InsertQuery(db, query, c.RepositoryArgs[i].Owner, &c)
 	}
 
-	err = tx.Commit()
 	if err != nil {
 		fmt.Println(err)
 	}

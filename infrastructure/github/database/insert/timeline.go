@@ -6,28 +6,42 @@ import (
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/timeline/model"
+	"sync"
+	"time"
 )
 
-func Timeline(db *sql.Tx, config *config.Config) {
+func Timeline(db *sql.DB, config *config.Config) {
 	timelines := model2.GetTimelineFromCreateAt(config.CreateAtGlobal)
-	for _, time := range timelines.Times {
-		_, err := db.Exec(`
+	var wg sync.WaitGroup
+	for _, t := range timelines.Times {
+		wg.Add(1)
+		go func(time time.Time) {
+			_, err := db.Exec(`
 insert into timeline (datetime)
 values (?) on duplicate key update datetime=?;`, time, time)
-		if err != nil {
-			fmt.Println("Insert fail while insert into timeline (datetime)", err)
-		}
+			if err != nil {
+				fmt.Println("Insert fail while insert into timeline (datetime)", err)
+			}
+			defer wg.Done()
+		}(t)
 	}
+	wg.Wait()
 }
 
-func TimelineRepository(db *sql.Tx, repository *model.Repository) {
+func TimelineRepository(db *sql.DB, repository *model.Repository) {
 	timelines := model2.GetTimelineFromCreateAt(repository.CreatedAt)
-	for _, time := range timelines.Times {
-		_, err := db.Exec(`
+	var wg sync.WaitGroup
+	for _, t := range timelines.Times {
+		wg.Add(1)
+		go func(time time.Time) {
+			_, err := db.Exec(`
 insert into timeline_repository (datetime,repository_id)
 values (?,?);`, time, repository.DatabaseID)
-		if err != nil {
-			fmt.Println("Insert fail while insert into repository_timeline (datetime,repository_id)", err)
-		}
+			if err != nil {
+				fmt.Println("Insert fail while insert into repository_timeline (datetime,repository_id)", err)
+			}
+			defer wg.Done()
+		}(t)
 	}
+	wg.Wait()
 }

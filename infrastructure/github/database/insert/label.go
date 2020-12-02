@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func Label(db *sql.Tx, repo *model.Repository, label *model.Label) {
+func Label(db *sql.DB, repo *model.Repository, label *model.Label) {
 	_, err := db.Exec(`
 insert into label (name,repository_id) values (?,?);`,
 		label.Name, repo.DatabaseID)
@@ -17,7 +17,7 @@ insert into label (name,repository_id) values (?,?);`,
 	}
 }
 
-func LabelSeverityWeight(db *sql.Tx, repository *model.Repository, weight config.LabelSeverityWeight) {
+func LabelSeverityWeight(db *sql.DB, repository *model.Repository, weight config.LabelSeverityWeight) {
 	_, err := db.Exec(`
 insert into label_severity_weight (label_id,weight)
 select label.id, ?
@@ -29,7 +29,7 @@ from label where label.name = ? and
 	}
 }
 
-func LabelSig(db *sql.Tx, repository *model.Repository, label *model.Label) {
+func LabelSig(db *sql.DB, repository *model.Repository, label *model.Label) {
 	if strings.Contains(label.Name, "sig") {
 		_, err := db.Exec(`
 insert into label_sig (label_id,label_name)

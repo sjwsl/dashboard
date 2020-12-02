@@ -7,7 +7,7 @@ import (
 )
 
 // insert.Repository insert Data into Repository table REPOSITORY
-func Repository(db *sql.Tx, repo *model.Repository, owner string) {
+func Repository(db *sql.DB, repo *model.Repository, owner string) {
 	_, err := db.Exec(`
 insert into  repository (id,owner,url,repo_name) values (?,?,?,?);`,
 		repo.DatabaseID, owner, repo.Url, repo.Name)

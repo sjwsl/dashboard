@@ -8,7 +8,7 @@ import (
 	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 )
 
-func Tag(db *sql.Tx, repo *model.Repository, tag *model.Ref) {
+func Tag(db *sql.DB, repo *model.Repository, tag *model.Ref) {
 	_, err := db.Exec(`
 insert into tag (name,repository_id) values (?,?);`,
 		tag.Name, repo.DatabaseID)
@@ -17,7 +17,7 @@ insert into tag (name,repository_id) values (?,?);`,
 	}
 }
 
-func Version(db *sql.Tx, tag *model.Ref) {
+func Version(db *sql.DB, tag *model.Ref) {
 	version, err := model2.ParseVersionFromRegularStrMustHaveV(tag.Name)
 	if err != nil {
 		return

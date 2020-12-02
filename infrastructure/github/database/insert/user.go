@@ -6,7 +6,7 @@ import (
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
-func User(db *sql.Tx, user *model.User) {
+func User(db *sql.DB, user *model.User) {
 	_, err := db.Exec(`
 insert into user (id,login,email) values (?,?,?) on duplicate key update login=?;`,
 		user.DatabaseID, user.Login, user.Email, user.Login)
@@ -15,7 +15,7 @@ insert into user (id,login,email) values (?,?,?) on duplicate key update login=?
 	}
 }
 
-func UserIssue(db *sql.Tx, issue *model.Issue, user *model.User) {
+func UserIssue(db *sql.DB, issue *model.Issue, user *model.User) {
 	_, err := db.Exec(`
 insert into user_issue (user_id, issue_id)
 select user.id,?
