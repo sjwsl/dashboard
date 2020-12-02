@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/util"
 	"time"
+
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/util"
 )
 
 type Timeline struct {

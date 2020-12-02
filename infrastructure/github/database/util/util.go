@@ -3,8 +3,9 @@ package util
 import (
 	"database/sql"
 	"fmt"
-	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 	"time"
+
+	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 )
 
 func GetIssueClosedTime(closed bool, closeAt *time.Time) sql.NullTime {

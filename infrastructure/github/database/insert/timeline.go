@@ -3,11 +3,12 @@ package insert
 import (
 	"database/sql"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/timeline/model"
-	"sync"
-	"time"
 )
 
 func Timeline(db *sql.DB, config *config.Config) {

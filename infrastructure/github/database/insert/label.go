@@ -3,9 +3,10 @@ package insert
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
-	"strings"
 )
 
 func Label(db *sql.DB, repo *model.Repository, label *model.Label) {

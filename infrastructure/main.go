@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
-	"time"
 )
 
 func main() {
