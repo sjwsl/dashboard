@@ -45,8 +45,7 @@ func IssueVersion(db *sql.DB, issue *model.Issue, body *string) {
 		err := issueVersionAffected(db, issue, &version)
 		if err != nil {
 			fmt.Println(err)
-			fmt.Println(*body)
-			fmt.Println(issue.Number)
+			fmt.Println("insert fail issue Number = ", issue.Number)
 			fmt.Println("###########################")
 		}
 	}
@@ -54,8 +53,7 @@ func IssueVersion(db *sql.DB, issue *model.Issue, body *string) {
 		err := issueVersionFixed(db, issue, &version)
 		if err != nil {
 			fmt.Println(err)
-			fmt.Println(*body)
-			fmt.Println(issue.Number)
+			fmt.Println("insert fail issue Number = ", issue.Number)
 			fmt.Println("###########################")
 		}
 	}
