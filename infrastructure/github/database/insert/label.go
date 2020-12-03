@@ -3,9 +3,10 @@ package insert
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
-	"strings"
 )
 
 func Label(db *sql.DB, repo *model.Repository, label *model.Label) {
@@ -19,8 +20,8 @@ insert into label (name,repository_id) values (?,?);`,
 
 func LabelSeverityWeight(db *sql.DB, repository *model.Repository, weight config.LabelSeverityWeight) {
 	_, err := db.Exec(`
-insert into label_severity_weight (label_id,weight)
-select label.id, ?
+insert into label_severity_weight (label_id,label_name,weight)
+select label.id,label.name, ?
 from label where label.name = ? and
                  label.repository_id = ?;`,
 		weight.Weight, weight.LabelName, repository.DatabaseID)

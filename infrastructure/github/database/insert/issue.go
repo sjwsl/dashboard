@@ -3,8 +3,10 @@ package insert
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/util"
+	util2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/util"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions"
 	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 )
@@ -12,12 +14,16 @@ import (
 // insert.Issue insert data into table ISSUE
 func Issue(db *sql.DB, repo *model.Repository, issue *model.Issue) {
 	closeAt := util.GetIssueClosedTime(issue.Closed, issue.ClosedAt)
+	closeAtWeek := util.GetIssueClosedWeek(issue.Closed, issue.ClosedAt)
+	createAtWeek := util2.ParseDate(issue.CreatedAt)
 	_, err := db.Exec(`
 insert into issue 
-(id,number, repository_id, closed, closed_at, created_at, title, url) 
-values (?,?,?,?,?,?,?,?);`,
+(id,number, repository_id, closed, closed_at, 
+ closed_week, created_at, created_week, title, url) 
+values (?,?,?,?,?,
+date_add(?, interval 7 - weekday(?) day),?,date_add(?, interval 7 - weekday(?) day),?,?);`,
 		issue.DatabaseID, issue.Number, repo.DatabaseID, issue.Closed,
-		closeAt, issue.CreatedAt, issue.Title, issue.Url)
+		closeAt, closeAtWeek, closeAtWeek, issue.CreatedAt, createAtWeek, createAtWeek, issue.Title, issue.Url)
 	if err != nil {
 		fmt.Println("Insert fail while insert into issue (id,number, repository_id, closed, closed_at, created_at, title, url) ", err)
 	}

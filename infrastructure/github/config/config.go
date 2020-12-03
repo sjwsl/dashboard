@@ -1,13 +1,15 @@
 package config
 
 import (
+	"path/filepath"
+	"time"
+
 	"github.com/BurntSushi/toml"
+	"github.com/google/martian/log"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/util"
 	dbConfig "github.com/PingCAP-QE/dashboard/infrastructure/github/database/config"
-	"github.com/google/martian/log"
-	"path/filepath"
-	"time"
 )
 
 type Config struct {

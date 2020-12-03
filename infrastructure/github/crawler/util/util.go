@@ -2,11 +2,12 @@ package util
 
 import (
 	"fmt"
-	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 	"io/ioutil"
 	"os"
 	. "reflect"
 	"strings"
+
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 
 // ReadFile Readfile with path return bytes

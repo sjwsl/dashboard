@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
-	"time"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func main() {
 	`, time.Now())
 	for {
 		time.Sleep(time.Hour)
+		c = config.GetConfig("./config.toml")
 		github.RunInfrastructure(c)
 		fmt.Printf(
 			`

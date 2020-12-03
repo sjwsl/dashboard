@@ -3,8 +3,10 @@ package util
 import (
 	"database/sql"
 	"fmt"
-	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 	"time"
+
+	util2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/util"
+	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 )
 
 func GetIssueClosedTime(closed bool, closeAt *time.Time) sql.NullTime {
@@ -12,6 +14,17 @@ func GetIssueClosedTime(closed bool, closeAt *time.Time) sql.NullTime {
 	if closed {
 		ct = sql.NullTime{
 			Time:  *closeAt,
+			Valid: true,
+		}
+	}
+	return ct
+}
+
+func GetIssueClosedWeek(closed bool, closeAt *time.Time) sql.NullTime {
+	ct := sql.NullTime{}
+	if closed {
+		ct = sql.NullTime{
+			Time:  util2.ParseDate(*closeAt),
 			Valid: true,
 		}
 	}

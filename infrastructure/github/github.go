@@ -3,6 +3,10 @@ package github
 import (
 	"database/sql"
 	"fmt"
+	"sync"
+
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/client"
@@ -11,8 +15,6 @@ import (
 	dbConfig "github.com/PingCAP-QE/dashboard/infrastructure/github/database/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/insert"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/truncate"
-	_ "github.com/go-sql-driver/mysql"
-	"sync"
 )
 
 var db *sql.DB
@@ -54,7 +56,7 @@ func InsertQuery(db *sql.DB, totalData model.Query, owner string, c *config.Conf
 	insert.Repository(db, totalData.Repository, owner)
 
 	insert.Timeline(db, c)
-
+	insert.WeekLine(db, c)
 	insert.TimelineRepository(db, totalData.Repository)
 	var wg sync.WaitGroup
 	for _, user := range totalData.Repository.AssignableUsers.Nodes {

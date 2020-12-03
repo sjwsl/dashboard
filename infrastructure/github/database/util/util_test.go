@@ -2,8 +2,9 @@ package util
 
 import (
 	"fmt"
-	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 	"testing"
+
+	model2 "github.com/PingCAP-QE/dashboard/infrastructure/github/processing/versions/model"
 )
 
 func TestGenIDFromVersion(t *testing.T) {

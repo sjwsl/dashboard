@@ -3,6 +3,7 @@ package insert
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/crawler/model"
 )
 

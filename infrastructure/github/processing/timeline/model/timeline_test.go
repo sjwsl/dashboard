@@ -7,6 +7,9 @@ import (
 )
 
 func TestGetTimelineFromCreateAt(t *testing.T) {
-	createAt := time.Now().AddDate(0, -2, -3)
+	createAt, err := time.Parse(time.RFC3339, "2015-09-06T04:01:52Z")
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(GetTimelineFromCreateAt(createAt))
 }
