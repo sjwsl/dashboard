@@ -1,19 +1,19 @@
 CreateAtGlobal = 2015-09-06T04:01:52Z
 
 [[LabelSeverityWeight]]
-LabelName = "severity/Critical"
+LabelName = "severity/critical"
 Weight = 10.0
 
 [[LabelSeverityWeight]]
-LabelName = "severity/Major"
+LabelName = "severity/major"
 Weight = 3.0
 
 [[LabelSeverityWeight]]
-LabelName = "severity/Moderate"
+LabelName = "severity/moderate"
 Weight = 1.0
 
 [[LabelSeverityWeight]]
-LabelName = "severity/Minor"
+LabelName = "severity/minor"
 Weight = 0.1
 
 [[RepositoryArgs]]
@@ -47,7 +47,7 @@ Name = "tidb-lightning"
 [CrawlerConfig]
 GraphqlPath = "./infrastructure/github/crawler/graphql/query.graphql"
 ServerUrl = "https://api.github.com/graphql"
-Authorization = [""]
+Authorization = []
 
 [DatabaseConfig]
-DatabaseUrl = "root:123456@tcp(127.0.0.1:3307)/GITHUB_INFO"
+DatabaseUrl = "root:123456@tcp(127.0.0.1:3307)/github_info"

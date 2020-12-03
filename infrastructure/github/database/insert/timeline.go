@@ -29,6 +29,24 @@ values (?) on duplicate key update datetime=?;`, time, time)
 	wg.Wait()
 }
 
+func WeekLine(db *sql.DB, config *config.Config) {
+	timelines := model2.GetTimelineFromCreateAt(config.CreateAtGlobal)
+	var wg sync.WaitGroup
+	for _, t := range timelines.Times {
+		wg.Add(1)
+		go func(time time.Time) {
+			_, err := db.Exec(`
+insert ignore into week_line (week)
+values (date_add(?, interval 7 - weekday(?) day));`, time, time)
+			if err != nil {
+				fmt.Println("Insert fail while insert into week_line (week)", err)
+			}
+			defer wg.Done()
+		}(t)
+	}
+	wg.Wait()
+}
+
 func TimelineRepository(db *sql.DB, repository *model.Repository) {
 	timelines := model2.GetTimelineFromCreateAt(repository.CreatedAt)
 	var wg sync.WaitGroup

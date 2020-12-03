@@ -1,3 +1,5 @@
+create database if not exists github_info;
+
 create table comment
 (
     id int not null,
@@ -14,7 +16,9 @@ create table issue
     repository_id int not null,
     closed tinyint(1) not null,
     closed_at datetime null,
-    created_at datetime null,
+    closed_week datetime null ,
+    created_at datetime not null,
+    created_week datetime not null,
     title varchar(1000) not null,
     url varchar(1000) not null,
     constraint issue_number_repository_id_uindex
@@ -62,6 +66,7 @@ create table issue_label
 create table label_severity_weight
 (
     label_id int not null,
+    label_name varchar(100) not null,
     weight float not null,
     primary key (label_id)
 );
@@ -90,6 +95,7 @@ create table label_sig
     primary key (label_id)
 );
 
+
 create table team
 (
     id int auto_increment
@@ -111,6 +117,11 @@ create table timeline
     datetime datetime not null,
     constraint datetime
         unique (datetime)
+);
+
+create table week_line
+(
+    week datetime not null unique
 );
 
 create table user
