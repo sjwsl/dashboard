@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/google/martian/log"
+	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -60,8 +60,7 @@ func CheckConfig(c config.Config) {
 	_, err = os.Open(c.GraphqlPath)
 	if err != nil {
 		absPath, _ := filepath.Abs(c.GraphqlPath)
-		log.Errorf("%s", absPath)
-		panic(err)
+		log.Fatal(absPath, err)
 	}
 
 	if len(c.Authorization) == 0 {
