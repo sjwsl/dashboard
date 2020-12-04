@@ -11,3 +11,4 @@ func TestRunInfrastructure(t *testing.T) {
 	c.CrawlerConfig.GraphqlPath = "./crawler/graphql/query.graphql"
 	RunInfrastructure(c)
 }
+
