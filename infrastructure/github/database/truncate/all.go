@@ -61,15 +61,15 @@ func AllClear(db *sql.DB) {
 		log.Fatalf("truncate table tag fail")
 	}
 
-	//_, err = db.Exec(`truncate table team;`)
-	//if err != nil {
-	//	log.Fatalf("truncate table team fail")
-	//}
-	//
-	//_, err = db.Exec(`truncate table team_label;`)
-	//if err != nil {
-	//	log.Fatalf("truncate table team_label fail")
-	//}
+	_, err = db.Exec(`truncate table team;`)
+	if err != nil {
+		log.Fatalf("truncate table team fail")
+	}
+
+	_, err = db.Exec(`truncate table team_label;`)
+	if err != nil {
+		log.Fatalf("truncate table team_label fail")
+	}
 
 	_, err = db.Exec(`truncate table timeline;`)
 	if err != nil {

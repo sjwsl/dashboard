@@ -57,6 +57,7 @@ func InsertQuery(db *sql.DB, totalData model.Query, owner string, c *config.Conf
 
 	insert.Timeline(db, c)
 	insert.WeekLine(db, c)
+	insert.Team(db, c)
 	insert.TimelineRepository(db, totalData.Repository)
 	var wg sync.WaitGroup
 	for _, user := range totalData.Repository.AssignableUsers.Nodes {
