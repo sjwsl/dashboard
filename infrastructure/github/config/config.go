@@ -18,6 +18,7 @@ type Config struct {
 	LabelSeverityWeight []LabelSeverityWeight
 	CreateAtGlobal      time.Time
 	DatabaseConfig      dbConfig.Config
+	TeamArgs            []TeamArg
 }
 
 func GetConfig(path string) Config {

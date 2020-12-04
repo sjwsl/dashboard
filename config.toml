@@ -51,3 +51,23 @@ Authorization = []
 
 [DatabaseConfig]
 DatabaseUrl = "root:123456@tcp(127.0.0.1:3307)/github_info"
+
+[[TeamArgs]]
+Name = "SQL-Engine"
+Size = 11
+
+[[TeamArgs]]
+Name = "TP-Arch"
+Size = 13
+
+[[TeamArgs]]
+Name = "SQL-Metadata"
+Size = 7
+
+[[TeamArgs]]
+Name = "Scheduling"
+Size = 9
+
+[[TeamArgs]]
+Name = "TP-Storage"
+Size = 14
