@@ -90,4 +90,9 @@ func AllClear(db *sql.DB) {
 	if err != nil {
 		log.Printf("truncate table version fail: %v", err)
 	}
+
+	_, err = db.Exec(`truncate table coverage;`)
+	if err != nil {
+		log.Printf("truncate coverage fail: %v", err)
+	}
 }

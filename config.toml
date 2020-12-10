@@ -47,10 +47,10 @@ Name = "tidb-lightning"
 [CrawlerConfig]
 GraphqlPath = "./infrastructure/github/crawler/graphql/query.graphql"
 ServerUrl = "https://api.github.com/graphql"
-Authorization = ["66eec0076b211be91abbccf3b74a19673bff555f"]
+Authorization = []
 
 [DatabaseConfig]
-DatabaseUrl = "root:Yaobaobao111^_^@tcp(localhost:3306)/github_info"
+DatabaseUrl = ""
 
 [[TeamArgs]]
 Name = "Runtime"

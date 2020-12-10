@@ -3,7 +3,9 @@ package github
 import (
 	"database/sql"
 	"fmt"
+	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/process"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/team"
+	"log"
 	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -16,6 +18,7 @@ import (
 	dbConfig "github.com/PingCAP-QE/dashboard/infrastructure/github/database/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/insert"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/truncate"
+	"github.com/PingCAP-QE/libs/coverage"
 )
 
 var db *sql.DB
@@ -30,7 +33,7 @@ func initDB(c dbConfig.Config) {
 	db.SetMaxOpenConns(100)
 
 	if err := db.Ping(); err != nil {
-		panic("open database fail")
+		log.Panicf("open database fail: %v", err)
 		return
 	}
 	fmt.Println("connect success")
@@ -95,7 +98,6 @@ func InsertQuery(db *sql.DB, totalData model.Query, owner string, c *config.Conf
 	}
 	wg.Wait()
 
-
 	fmt.Println("Inserting Issue...")
 	for _, issue := range totalData.Repository.Issues.Nodes {
 		wg.Add(1)
@@ -138,7 +140,6 @@ func InsertQuery(db *sql.DB, totalData model.Query, owner string, c *config.Conf
 		}
 	}
 	wg.Wait()
-
 
 	fmt.Println("Inserting IssueLabel...")
 	for _, issue := range totalData.Repository.Issues.Nodes {
@@ -183,6 +184,14 @@ func RunInfrastructure(c config.Config) {
 
 	initDB(c.DatabaseConfig)
 
+	fmt.Println("Processing coverage...")
+	for _, repositoryArg := range c.RepositoryArgs {
+		err := coverage.ProcessCoverage(db, repositoryArg.Owner, repositoryArg.Name)
+		if err != nil {
+			fmt.Printf("ProcessCoverage error: %v\n", err)
+		}
+	}
+
 	queries := make([]model.Query, len(c.RepositoryArgs))
 	for i, repositoryArg := range c.RepositoryArgs {
 		queries[i] = FetchQuery(c.CrawlerConfig, repositoryArg.Owner, repositoryArg.Name)
@@ -198,6 +207,8 @@ func RunInfrastructure(c config.Config) {
 	for i, query := range queries {
 		InsertQuery(db, query, c.RepositoryArgs[i].Owner, &c)
 	}
+
+	process.ProcessAll(db)
 
 	if err != nil {
 		fmt.Println(err)
