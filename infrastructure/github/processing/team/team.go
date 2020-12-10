@@ -15,37 +15,42 @@ func exist(target string, list []string) bool {
 
 func GetTeams(repo string, issue *model.Issue) []string {
 	teamsMap := map[string]bool{
-		"SQL-Engine":   false,
-		"TP-Arch":      false,
-		"SQL-Metadata": false,
-		"TP-Storage":   false,
-		"Scheduling":   false,
+		"Runtime":                     false,
+		"Optimizer":                   false,
+		"Transaction-A Transaction-B": false,
+		"General":                     false,
+		"Scheduling":                  false,
+		"TP-Storage Cloud-Storage":    false,
 	}
 	switch repo {
 	case "tidb":
 		for _, label := range issue.Labels.Nodes {
 			if exist(label.Name, []string{
-				"sig/execution", "sig/planner", "component/coprocessor", "component/expression",
-				"component/json", "component/executor", "component/statistics", "component/bindinfo"}) {
-				teamsMap["SQL-Engine"] = true
+				"sig/excution", "component/coprocessor", "component/expression", "component/json", "component/executor",
+			}) {
+				teamsMap["Runtime"] = true
 			}
 
 			if exist(label.Name, []string{
-				"sig/transaction", "component/store", "component/tikv", "component/unistore",
-				"component/mysql-protocol", "component/plugin", "component/privilege"}) {
-				teamsMap["TP-Arch"] = true
+				"sig/planner", "component/statistics", "component/bindinfo",}) {
+				teamsMap["Optimizer"] = true
 			}
 
-			if exist(label.Name, []string{"sig/DDL", "component/charset", "component/parser", "component/infoschema", "component/ddl"}) {
-				teamsMap["SQL-Metadata"] = true
+			if exist(label.Name, []string{"sig/transaction", "component/store", "component/tikv", "component/unistore",}) {
+				teamsMap["Transaction-A Transaction0-B"] = true
+			}
+
+			if exist(label.Name, []string{"sig/DDL", "component/charset", "component/parser", "component/infoscheme", "component/ddl", "component/mysql-protocol", "component/plugin",
+				"component/privilege", "component/config", "component/server",}) {
+				teamsMap["General"] = true
 			}
 		}
 	case "tikv":
-		teamsMap["TP-Storage"] = true
+		teamsMap["TP-Storage Cloud-Storage"] = true
 		for _, label := range issue.Labels.Nodes {
 			if exist(label.Name, []string{"sig/transaction", "component/storage"}) {
-				teamsMap["TP-Arch"] = true
-				teamsMap["TP-Storage"] = false
+				teamsMap["TP-Storage Cloud-Storage"]= false
+				teamsMap["Transaction-A Transaction-B"] = true
 				break
 			}
 		}
