@@ -44,6 +44,14 @@ Name = "br"
 Owner = "pingcap"
 Name = "tidb-lightning"
 
+[[RepositoryArgs]]
+Owner = "pingcap"
+Name = "tidb-operator"
+
+[[RepositoryArgs]]
+Owner = "pingcap"
+Name = "tiup"
+
 [CrawlerConfig]
 GraphqlPath = "./infrastructure/github/crawler/graphql/query.graphql"
 ServerUrl = "https://api.github.com/graphql"
