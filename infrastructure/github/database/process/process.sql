@@ -4,7 +4,7 @@ SELECT CURTIME(),
        SUM(weight) AS DI,
        IF(SUM(weight) >= t.size * 10
               OR (SUM(weight) >= t.size * 5 AND
-                  EXISTS(SELECT team_bug_jail.team_id FROM team_bug_jail WHERE t.id = team_bug_jail.team_id)),
+                 EXISTS(SELECT team_bug_jail.team_id FROM team_bug_jail WHERE t.id = team_bug_jail.team_id AND in_jail = TRUE)),
           TRUE,
           FALSE)
 FROM issue

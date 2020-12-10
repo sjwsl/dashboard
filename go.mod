@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/PingCAP-QE/libs v0.0.0-20201210085023-9ceecdd9bfac
+	github.com/PingCAP-QE/libs v0.0.0-20201210093221-e99fa4d846b7
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/martian v2.1.0+incompatible
 	github.com/machinebox/graphql v0.2.2
