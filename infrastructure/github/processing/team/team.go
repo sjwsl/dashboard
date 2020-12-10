@@ -26,22 +26,22 @@ func GetTeams(repo string, issue *model.Issue) []string {
 	case "tidb":
 		for _, label := range issue.Labels.Nodes {
 			if exist(label.Name, []string{
-				"sig/excution", "component/coprocessor", "component/expression", "component/json", "component/executor",
+				"sig/execution", "component/coprocessor", "component/expression", "component/json", "component/executor",
 			}) {
 				teamsMap["Runtime"] = true
 			}
 
 			if exist(label.Name, []string{
-				"sig/planner", "component/statistics", "component/bindinfo",}) {
+				"sig/planner", "component/statistics", "component/bindinfo"}) {
 				teamsMap["Optimizer"] = true
 			}
 
-			if exist(label.Name, []string{"sig/transaction", "component/store", "component/tikv", "component/unistore",}) {
-				teamsMap["Transaction-A Transaction0-B"] = true
+			if exist(label.Name, []string{"sig/transaction", "component/store", "component/tikv", "component/unistore"}) {
+				teamsMap["Transaction-A Transaction-B"] = true
 			}
 
 			if exist(label.Name, []string{"sig/DDL", "component/charset", "component/parser", "component/infoscheme", "component/ddl", "component/mysql-protocol", "component/plugin",
-				"component/privilege", "component/config", "component/server",}) {
+				"component/privilege", "component/config", "component/server"}) {
 				teamsMap["General"] = true
 			}
 		}
@@ -49,7 +49,7 @@ func GetTeams(repo string, issue *model.Issue) []string {
 		teamsMap["TP-Storage Cloud-Storage"] = true
 		for _, label := range issue.Labels.Nodes {
 			if exist(label.Name, []string{"sig/transaction", "component/storage"}) {
-				teamsMap["TP-Storage Cloud-Storage"]= false
+				teamsMap["TP-Storage Cloud-Storage"] = false
 				teamsMap["Transaction-A Transaction-B"] = true
 				break
 			}
