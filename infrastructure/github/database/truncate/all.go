@@ -6,24 +6,21 @@ import (
 )
 
 func AllClear(db *sql.DB) {
-	_, err := db.Exec(`truncate table comment;`)
-	if err != nil {
-		log.Printf("truncate table comment fail: %v", err)
-	}
+	var err error
 
-	_, err = db.Exec(`truncate table issue;`)
+	_, err = db.Exec(`SET FOREIGN_KEY_CHECKS = 0;`)
 	if err != nil {
-		log.Printf("truncate table issue fail: %v", err)
-	}
-
-	_, err = db.Exec(`truncate table issue_label;`)
-	if err != nil {
-		log.Printf("truncate table issue_label fail: %v", err)
+		log.Printf("SET FOREIGN_KEY_CHECKS = 0; fail: %v", err)
 	}
 
 	_, err = db.Exec(`truncate table team_issue;`)
 	if err != nil {
 		log.Printf("truncate table team_issue fail: %v", err)
+	}
+
+	_, err = db.Exec(`truncate table user_issue;`)
+	if err != nil {
+		log.Printf("truncate table user_issue fail: %v", err)
 	}
 
 	_, err = db.Exec(`truncate table issue_version_affected;`)
@@ -36,10 +33,16 @@ func AllClear(db *sql.DB) {
 		log.Printf("truncate table issue_version_fixed faiZ: %v", err)
 	}
 
-	_, err = db.Exec(`truncate table label;`)
+	_, err = db.Exec(`truncate table comment;`)
 	if err != nil {
-		log.Printf("truncate table label fail: %v", err)
+		log.Printf("truncate table comment fail: %v", err)
 	}
+
+	_, err = db.Exec(`truncate table issue_label;`)
+	if err != nil {
+		log.Printf("truncate table issue_label fail: %v", err)
+	}
+
 
 	_, err = db.Exec(`truncate table label_severity_weight;`)
 	if err != nil {
@@ -51,19 +54,9 @@ func AllClear(db *sql.DB) {
 		log.Printf("truncate table label_sig fail: %v", err)
 	}
 
-	_, err = db.Exec(`truncate table repository;`)
-	if err != nil {
-		log.Printf("truncate table repository fail: %v", err)
-	}
-
 	_, err = db.Exec(`truncate table tag;`)
 	if err != nil {
 		log.Printf("truncate table tag fail: %v", err)
-	}
-
-	_, err = db.Exec(`truncate table team;`)
-	if err != nil {
-		log.Printf("truncate table team fail: %v", err)
 	}
 
 	_, err = db.Exec(`truncate table timeline;`)
@@ -81,9 +74,9 @@ func AllClear(db *sql.DB) {
 		log.Printf("truncate table user fail: %v", err)
 	}
 
-	_, err = db.Exec(`truncate table user_issue;`)
+	_, err = db.Exec(`truncate table team;`)
 	if err != nil {
-		log.Printf("truncate table user_issue fail: %v", err)
+		log.Printf("truncate table team fail: %v", err)
 	}
 
 	_, err = db.Exec(`truncate table version;`)
@@ -94,5 +87,25 @@ func AllClear(db *sql.DB) {
 	_, err = db.Exec(`truncate table coverage_timeline;`)
 	if err != nil {
 		log.Printf("truncate coverage fail: %v", err)
+	}
+
+	_, err = db.Exec(`truncate table label;`)
+	if err != nil {
+		log.Printf("truncate table label fail: %v", err)
+	}
+
+	_, err = db.Exec(`truncate table issue;`)
+	if err != nil {
+		log.Printf("truncate table issue fail: %v", err)
+	}
+
+	_, err = db.Exec(`truncate table repository;`)
+	if err != nil {
+		log.Printf("truncate table repository fail: %v", err)
+	}
+
+	_, err = db.Exec(`SET FOREIGN_KEY_CHECKS = 1;`)
+	if err != nil {
+		log.Printf("SET FOREIGN_KEY_CHECKS = 1; fail: %v", err)
 	}
 }
