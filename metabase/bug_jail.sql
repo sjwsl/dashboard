@@ -1,9 +1,11 @@
 # Team Jail
 WITH team_max_time AS (SELECT max(time) max_time, team_id FROM team_bug_jail GROUP BY team_id)
-SELECT DISTINCT t.name                               AS team,
-                team_bug_jail.di                     AS DI,
-                team_bug_jail.di - t.size * 5        AS `DI to free`,
-                team_bug_jail.time + INTERVAL 8 HOUR AS `update time`
+SELECT DISTINCT t.name                                                      AS team,
+                team_bug_jail.di                                            AS DI,
+                team_bug_jail.di - t.size * 5                               AS `DI to free`,
+                (SELECT MAX(time) FROM team_bug_jail WHERE team_bug_jail.team_id = t.id AND in_jail = FALSE) AS `jail day`,
+                team_bug_jail.time + INTERVAL 8 HOUR                        AS `update time`
+
 FROM team_bug_jail
          JOIN team_max_time
               ON team_max_time.team_id = team_bug_jail.team_id AND team_max_time.max_time = team_bug_jail.time
@@ -28,10 +30,11 @@ ORDER BY di
 
 # User Jail
 WITH user_max_time AS (SELECT max(time) max_time, user_id FROM user_bug_jail GROUP BY user_id)
-SELECT DISTINCT u.login                              AS user,
-                user_bug_jail.di                     AS DI,
-                user_bug_jail.time + INTERVAL 8 HOUR AS `update time`,
-                critical
+SELECT DISTINCT u.login                                                     AS user,
+                user_bug_jail.di                                            AS DI,
+                critical,
+                (SELECT MAX(time) FROM user_bug_jail WHERE user_bug_jail.user_id = u.id AND in_jail = FALSE) AS `jail day`,
+                user_bug_jail.time + INTERVAL 8 HOUR                        AS `update time`
 FROM user_bug_jail
          INNER JOIN user u ON user_bug_jail.user_id = u.id
          INNER JOIN user_max_time

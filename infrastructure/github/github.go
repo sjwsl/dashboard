@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/process"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/processing/team"
+	"github.com/PingCAP-QE/libs/coverage"
 	"log"
 	"sync"
 
@@ -18,7 +19,6 @@ import (
 	dbConfig "github.com/PingCAP-QE/dashboard/infrastructure/github/database/config"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/insert"
 	"github.com/PingCAP-QE/dashboard/infrastructure/github/database/truncate"
-	"github.com/PingCAP-QE/libs/coverage"
 )
 
 var db *sql.DB
@@ -184,14 +184,6 @@ func RunInfrastructure(c config.Config) {
 
 	initDB(c.DatabaseConfig)
 
-	fmt.Println("Processing coverage...")
-	for _, repositoryArg := range c.RepositoryArgs {
-		err := coverage.ProcessCoverage(db, repositoryArg.Owner, repositoryArg.Name)
-		if err != nil {
-			fmt.Printf("ProcessCoverage error: %v\n", err)
-		}
-	}
-
 	queries := make([]model.Query, len(c.RepositoryArgs))
 	for i, repositoryArg := range c.RepositoryArgs {
 		queries[i] = FetchQuery(c.CrawlerConfig, repositoryArg.Owner, repositoryArg.Name)
@@ -206,6 +198,14 @@ func RunInfrastructure(c config.Config) {
 
 	for i, query := range queries {
 		InsertQuery(db, query, c.RepositoryArgs[i].Owner, &c)
+	}
+
+	fmt.Println("Processing coverage...")
+	for _, repositoryArg := range c.RepositoryArgs {
+		err := coverage.ProcessCoverage(db, repositoryArg.Owner, repositoryArg.Name)
+		if err != nil {
+			fmt.Printf("ProcessCoverage error: %v\n", err)
+		}
 	}
 
 	process.ProcessAll(db)

@@ -5,7 +5,9 @@ SELECT CURTIME(),
        SUM(weight) AS DI,
        IF(SUM(weight) >= t.size * 10
               OR (SUM(weight) >= t.size * 5 AND
-                 EXISTS(SELECT team_bug_jail.team_id FROM team_bug_jail WHERE t.id = team_bug_jail.team_id AND in_jail = TRUE)),
+                 (SELECT MAX(time) FROM team_bug_jail WHERE t.id = team_bug_jail.team_id AND in_jail = TRUE) =
+                  (SELECT MAX(time) FROM team_bug_jail WHERE t.id = team_bug_jail.team_id)
+                  ),
           TRUE,
           FALSE)
 FROM issue
@@ -37,10 +39,9 @@ SELECT curtime()   AS time,
                      > 48
               ) OR SUM(weight) >= 15
               OR ((SUM(weight) >= 7.5 AND
-                   EXISTS(SELECT user_bug_jail.user_id
-                          FROM user_bug_jail
-                          WHERE u.id = user_bug_jail.user_id
-                            AND in_jail = TRUE))),
+                   (SELECT MAX(time) FROM user_bug_jail WHERE user_id = user_bug_jail.user_id AND in_jail = TRUE) =
+                  (SELECT MAX(time) FROM user_bug_jail WHERE user_id = user_bug_jail.user_id)
+                   )),
           TRUE, FALSE
            )       AS in_jail,
        SUM(weight) AS di,
